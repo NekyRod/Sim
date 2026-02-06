@@ -1,0 +1,22 @@
+React Native
+pm install -g expo-cli
+expo init sim-agenda-app
+cd sim-agenda-app
+npm install axios @react-navigation/native @react-navigation/native-stack
+npm install react-native-screens react-native-safe-area-context
+
+npx expo install react-dom react-native-web
+npm start -- --clear
+
+expo start -c
+
+React web
+npm create vite@latest sim-agenda-web -- --template react
+npm install react-icons
+npm run dev
+
+
+reiniciar
+Remove-Item -Recurse -Force node_modules
+npm install
+npm run dev
