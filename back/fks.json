@@ -1,0 +1,28 @@
+{
+  "tipos_servicio": {
+    "data": [
+      {
+        "id": 1,
+        "codigo": "PBS",
+        "nombre": "Plan de Beneficios de Salud",
+        "activo": true
+      }
+    ]
+  },
+  "especialidades": {
+    "data": [
+      {
+        "id": 5,
+        "codigo": "ODO",
+        "nombre": "Odontolog\u00eda",
+        "activo": true
+      },
+      {
+        "id": 7,
+        "codigo": "RES",
+        "nombre": "Resina",
+        "activo": true
+      }
+    ]
+  }
+}

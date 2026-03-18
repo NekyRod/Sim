@@ -14,6 +14,8 @@ import AgendaDiaria from './pages/AgendaDiaria.jsx';
 import AgendaSemanal from './pages/AgendaSemanal.jsx';
 import CrearDisponibilidad from './pages/CrearDisponibilidad.jsx';
 import Informes from './pages/Informes.jsx';
+import Dashboard from './pages/Dashboard.jsx';
+import Manual from './pages/Manual.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import Principal from './pages/Principal.jsx';
 import logoGOI from './img/logo_goi.jpg';
@@ -25,7 +27,21 @@ import TiposPBS from './pages/config/TiposPBS.jsx';
 import Festivos from './pages/config/Festivos.jsx';
 import TiposIdentificacion from './pages/config/TiposIdentificacion.jsx';
 import CiudadesResidencia from './pages/config/CiudadesResidencia.jsx';
+import Procedimientos from './pages/config/Procedimientos.jsx';
+import PatientChat from './pages/chat/PatientChat.jsx';
+import ChatManagement from './pages/admin/ChatManagement.jsx';
+import SmtpSettings from './pages/admin/SmtpSettings.jsx';
+import RoleManager from './pages/admin/RoleManager.jsx';
+import UserManager from './pages/admin/UserManager.jsx';
+import RegisterPage from './pages/RegisterPage.jsx';
+import OdontogramPage from './pages/OdontogramPage.jsx';
+import PatientLayout from './layouts/PatientLayout.jsx';
+import PatientDetailView from './pages/admin/PatientDetailView.jsx';
+
 import { apiFetch } from './api/client';
+import PremiumLayout from './layouts/PremiumLayout.jsx';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import HasPermission from './components/auth/HasPermission.jsx';
 
 // ========== COMPONENTE DE BÚSQUEDA ==========
 function SearchBar() {
@@ -64,18 +80,17 @@ function SearchBar() {
   }
 
   function handleSelectPaciente(paciente) {
-    const currentPath = location.pathname;
+    // const currentPath = location.pathname; // No longer needed for logic here
     
-    // ← CAMBIADO: Disparar evento con TODOS los datos del paciente
     const event = new CustomEvent('pacienteSeleccionado', {
       detail: paciente
     });
     window.dispatchEvent(event);
 
-    if (!currentPath.includes('/agendamiento') && !currentPath.includes('/pacientes')) {
-      navigate('/agendamiento');
-    }
-
+    // We do NOT navigate automatically anymore. 
+    // AppContent listener decides if it opens Modal or if current page handles it.
+    // Exception: If we are in public pages? SearchBar only exists in PremiumLayout (Admin).
+    
     setSearchTerm('');
     setShowResults(false);
     setResultados([]);
@@ -140,161 +155,186 @@ function SearchBar() {
 
 // ========== COMPONENTE PRINCIPAL CON RUTAS ==========
 function AppContent() {
-  const [showConfigMenu, setShowConfigMenu] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { isAuthenticated, logout: authLogout, role } = useAuth();
+  const navigate = useNavigate();
+  
+  console.log("AppContent Render. Auth:", isAuthenticated, "Role:", role);
 
+  // Listen for global search selection
   useEffect(() => {
-    const token = sessionStorage.getItem('auth_token');
-    if (token) setIsAuthenticated(true);
-  }, []);
+    function handlePacienteSeleccionado(e) {
+      if (!isAuthenticated) return;
+      const currentPath = window.location.pathname;
+
+      // Redirect to Patient Detail Page unless we are in Agendamiento (where we populate a form)
+      if (!currentPath.includes('/agendamiento')) {
+         navigate(`/admin/pacientes/${e.detail.id}`);
+      }
+    }
+    window.addEventListener('pacienteSeleccionado', handlePacienteSeleccionado);
+    return () => window.removeEventListener('pacienteSeleccionado', handlePacienteSeleccionado);
+  }, [isAuthenticated]);
 
   function handleLogout() {
-    sessionStorage.removeItem('auth_token');
-    sessionStorage.removeItem('auth_user');
-    setIsAuthenticated(false);
-    setShowConfigMenu(false); // ← Reset menú config
-  }
-  function handleAbrirConfiguracion() {
-    setShowConfigMenu(true);
+    console.log("Logging out...");
+    authLogout();
   }
 
-  function handleRegresar() {
-    setShowConfigMenu(false);
+  // 1. Routes for Authenticated Admins/Receptionists
+  if (isAuthenticated) {
+    if (role === 'PATIENT') {
+        handleLogout();
+        return <Navigate to="/" />;
+    }
+
+    return (
+      <>
+        <PremiumLayout 
+          searchBar={<SearchBar />}
+          onLogout={handleLogout}
+        >
+          <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            
+            <Route path="/agendamiento" element={
+              <HasPermission group="AGENDAMIENTO" action="view" fallback={<Navigate to="/dashboard" />}>
+                <Agendamiento />
+              </HasPermission>
+            } />
+
+            {/* Módulo de Agendas */}
+            <Route path="/control-agendas" element={
+              <HasPermission group="AGENDAS" action="view" fallback={<Navigate to="/dashboard" />}>
+                <ControlAgendas />
+              </HasPermission>
+            } />
+            <Route path="/agenda-diaria" element={
+              <HasPermission group="AGENDAS" action="view" fallback={<Navigate to="/dashboard" />}>
+                <AgendaDiaria />
+              </HasPermission>
+            } />
+            <Route path="/agenda-semanal" element={
+              <HasPermission group="AGENDAS" action="view" fallback={<Navigate to="/dashboard" />}>
+                <AgendaSemanal />
+              </HasPermission>
+            } />
+
+            <Route path="/crear-disponibilidad" element={
+              <HasPermission group="DISPONIBILIDAD" action="view" fallback={<Navigate to="/dashboard" />}>
+                <CrearDisponibilidad />
+              </HasPermission>
+            } />
+
+            <Route path="/informes" element={
+              <HasPermission group="INFORMES" action="view" fallback={<Navigate to="/dashboard" />}>
+                <Informes />
+              </HasPermission>
+            } />
+            <Route path="/manual" element={<Manual />} />
+            <Route path="/pacientes" element={
+              <HasPermission group="PACIENTES" action="view" fallback={<Navigate to="/dashboard" />}>
+                <Pacientes />
+              </HasPermission>
+            } />
+            <Route path="/pacientes/:id/odontograma" element={
+              <HasPermission group="PACIENTES" action="view" fallback={<Navigate to="/dashboard" />}>
+                <OdontogramPage />
+              </HasPermission>
+            } />
+            
+            {/* Configuración del Sistema */}
+            <Route path="/profesionales" element={
+              <HasPermission group="PROFESIONALES" action="view" fallback={<Navigate to="/dashboard" />}>
+                <Profesionales />
+              </HasPermission>
+            } />
+            <Route path="/tipos-servicio" element={
+              <HasPermission group="TIPOS_SERVICIO" action="view" fallback={<Navigate to="/dashboard" />}>
+                <TiposServicio />
+              </HasPermission>
+            } />
+            <Route path="/especialidades" element={
+              <HasPermission group="ESPECIALIDADES" action="view" fallback={<Navigate to="/dashboard" />}>
+                <Especialidades />
+              </HasPermission>
+            } />
+            <Route path="/tipos-pbs" element={
+              <HasPermission group="PBS" action="view" fallback={<Navigate to="/dashboard" />}>
+                <TiposPBS />
+              </HasPermission>
+            } />
+            <Route path="/festivos" element={
+              <HasPermission group="FESTIVOS" action="view" fallback={<Navigate to="/dashboard" />}>
+                <Festivos />
+              </HasPermission>
+            } />
+            <Route path="/tipos-identificacion" element={
+              <HasPermission group="IDENTIFICACION" action="view" fallback={<Navigate to="/dashboard" />}>
+                <TiposIdentificacion />
+              </HasPermission>
+            } />
+            <Route path="/ciudades-residencia" element={
+              <HasPermission group="CIUDADES" action="view" fallback={<Navigate to="/dashboard" />}>
+                <CiudadesResidencia />
+              </HasPermission>
+            } />
+
+            {/* Administrador (Rutas restringidas) */}
+            <Route path="/admin/chat" element={
+              <HasPermission group="CHAT" action="view" fallback={<Navigate to="/dashboard" />}>
+                <ChatManagement />
+              </HasPermission>
+            } />
+            <Route path="/admin/smtp" element={
+              <HasPermission group="SISTEMA" action="view" fallback={<Navigate to="/dashboard" />}>
+                <SmtpSettings />
+              </HasPermission>
+            } />
+            <Route path="/admin/procedimientos" element={
+              <HasPermission group="SISTEMA" action="view" fallback={<Navigate to="/dashboard" />}>
+                <Procedimientos />
+              </HasPermission>
+            } />
+            
+            {/* Gestión de Roles: Solo accesible para el rol Administrador (Maestro) */}
+            <Route path="/admin/roles" element={
+              role === 'Administrador' ? <RoleManager /> : <Navigate to="/dashboard" />
+            } />
+            
+            <Route path="/admin/users" element={
+              <HasPermission group="USUARIOS" action="view" fallback={<Navigate to="/dashboard" />}>
+                <UserManager />
+              </HasPermission>
+            } />
+
+            {/* Ficha Completa del Paciente (Nueva Fase 6) */}
+            <Route path="/admin/pacientes/:id" element={
+                <PatientDetailView />
+            } />
+
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </PremiumLayout>
+      </>
+    );
   }
-  if (!isAuthenticated) {
-    return <LoginPage onLoginSuccess={() => setIsAuthenticated(true)} />;
-  }
+
+  // 2. Public Routes (Chat is default)
   return (
-    <div>
-      {/* BARRA DE BÚSQUEDA - ARRIBA DE TODO */}
-      <div className="search-bar-wrapper">
-        <SearchBar />
-      </div>
-
-      {/* HEADER ORIGINAL */}
-      <header>
-        <div className="logo-container">
-          <img src={logoGOI} alt="GOI" className="logo-img" />
-        </div>
-
-        {/* NAVEGACIÓN */}
-        <nav className={showConfigMenu ? 'config-mode' : ''}>
-          {!showConfigMenu ? (
-            <>
-              <NavLink to="/agendamiento" className={({ isActive }) => isActive ? 'menu-btn active' : 'menu-btn'}>
-                <FaClipboardList className="icon" />
-                <span>Agendamiento</span>
-              </NavLink>
-
-              <NavLink to="/control-agendas" className={({ isActive }) => isActive ? 'menu-btn active' : 'menu-btn'}>
-                <FaCalendarCheck className="icon" />
-                <span>Control de Agendas</span>
-              </NavLink>
-
-              <NavLink to="/agenda-diaria" className={({ isActive }) => isActive ? 'menu-btn active' : 'menu-btn'}>
-                <FaCalendarDay className="icon" />
-                <span>Agenda diaria</span>
-              </NavLink>
-
-              <NavLink to="/agenda-semanal" className={({ isActive }) => isActive ? 'menu-btn active' : 'menu-btn'}>
-                <FaCalendarWeek className="icon" />
-                <span>Agenda semanal</span>
-              </NavLink>
-
-              <NavLink to="/crear-disponibilidad" className={({ isActive }) => isActive ? 'menu-btn active' : 'menu-btn'}>
-                <FaClock className="icon" />
-                <span>Crear Disponibilidad</span>
-              </NavLink>
-
-              <NavLink to="/informes" className={({ isActive }) => isActive ? 'menu-btn active' : 'menu-btn'}>
-                <FaChartBar className="icon" />
-                <span>Informes</span>
-              </NavLink>
-
-              <button onClick={handleAbrirConfiguracion} className="menu-btn">
-                <FaCog className="icon" />
-                <span>Configuración</span>
-              </button>
-            </>
-          ) : (
-            <>
-              <button onClick={handleRegresar} className="menu-btn">
-                <FaArrowLeft className="icon" />
-                <span>Regresar</span>
-              </button>
-
-              <NavLink to="/pacientes" className={({ isActive }) => isActive ? 'menu-btn active' : 'menu-btn'}>
-                <FaUser className="icon" />
-                <span>Pacientes</span>
-              </NavLink>
-
-              <NavLink to="/profesionales" className={({ isActive }) => isActive ? 'menu-btn active' : 'menu-btn'}>
-                <FaUserMd className="icon" />
-                <span>Profesionales</span>
-              </NavLink>
-
-              <NavLink to="/tipos-servicio" className={({ isActive }) => isActive ? 'menu-btn active' : 'menu-btn'}>
-                <FaTags className="icon" />
-                <span>Tipos de Servicio</span>
-              </NavLink>
-
-              <NavLink to="/especialidades" className={({ isActive }) => isActive ? 'menu-btn active' : 'menu-btn'}>
-                <FaTags className="icon" />
-                <span>Especialidades</span>
-              </NavLink>
-
-              <NavLink to="/tipos-pbs" className={({ isActive }) => isActive ? 'menu-btn active' : 'menu-btn'}>
-                <FaTags className="icon" />
-                <span>Tipos PBS</span>
-              </NavLink>
-
-              <NavLink to="/festivos" className={({ isActive }) => isActive ? 'menu-btn active' : 'menu-btn'}>
-                <FaCalendarTimes className="icon" />
-                <span>Festivos</span>
-              </NavLink>
-
-              <NavLink to="/tipos-identificacion" className={({ isActive }) => isActive ? 'menu-btn active' : 'menu-btn'}>
-                <FaIdCard className="icon" />
-                <span>Tipos Identificación</span>
-              </NavLink>
-
-              <NavLink to="/ciudades-residencia" className={({ isActive }) => isActive ? 'menu-btn active' : 'menu-btn'}>
-                <FaMapMarkerAlt className="icon" />
-                <span>Ciudades Residencia</span>
-              </NavLink>
-            </>
-          )}
-        </nav>
-
-        {/* LOGOUT BUTTON */}
-        <div className="header-right">
-          <button onClick={handleLogout} className="logout-btn" title="Cerrar sesión">
-            <FaPowerOff />
-          </button>
-        </div>
-      </header>
-
-      {/* CONTENIDO - RUTAS */}
-      <main>
-        <Routes>
-          <Route path="/" element={<Navigate to="/agendamiento" />} />
-          <Route path="/agendamiento" element={<Agendamiento />} />
-          <Route path="/control-agendas" element={<ControlAgendas />} />
-          <Route path="/agenda-diaria" element={<AgendaDiaria />} />
-          <Route path="/agenda-semanal" element={<AgendaSemanal />} />
-          <Route path="/crear-disponibilidad" element={<CrearDisponibilidad />} />
-          <Route path="/informes" element={<Informes />} />
-          <Route path="/pacientes" element={<Pacientes />} />
-          <Route path="/profesionales" element={<Profesionales />} />
-          <Route path="/tipos-servicio" element={<TiposServicio />} />
-          <Route path="/especialidades" element={<Especialidades />} />
-          <Route path="/tipos-pbs" element={<TiposPBS />} />
-          <Route path="/festivos" element={<Festivos />} />
-          <Route path="/tipos-identificacion" element={<TiposIdentificacion />} />
-          <Route path="/ciudades-residencia" element={<CiudadesResidencia />} />
-        </Routes>
-      </main>
-    </div>
+      <Routes>
+        <Route path="/login" element={<LoginPage onLoginSuccess={() => {}} />} />
+        
+        {/* Default Public Route: Patient Chat */}
+        <Route path="/" element={
+            <PatientLayout>
+                <PatientChat />
+            </PatientLayout>
+        } />
+        
+        {/* Redirect any unknown to root (Chat) */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
   );
 }
 
@@ -302,7 +342,9 @@ function AppContent() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </BrowserRouter>
   );
 }

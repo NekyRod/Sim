@@ -1,11 +1,10 @@
-// src/pages/AgendaDiaria.jsx
 import { useState, useEffect, useMemo } from 'react';
 import { apiFetch } from '../api/client';
 import { showToast, showConfirm } from '../utils/ui';
 import { FaTrash, FaSearch, FaCalendarAlt, FaSortAmountDown, FaSortAmountUp, FaUserMd, FaEdit, FaFileExcel } from 'react-icons/fa';
 import ModalAgendarCita from '../components/ModalAgendarCita';
 import { exportToExcel } from '../utils/excel';
-import '../styles/estilos.css';
+import { Card, Input, Select, Button, Table, Badge } from '../components/ui';
 
 export default function AgendaDiaria() {
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
@@ -36,7 +35,7 @@ export default function AgendaDiaria() {
 
   async function cargarProfesionales() {
     try {
-      const resp = await apiFetch(`${BACKEND_URL}/profesionales`);
+      const resp = await apiFetch(`${BACKEND_URL}/profesionales/`);
       setProfesionales(resp.data || []);
     } catch (err) {
       console.error('Error cargando profesionales', err);
@@ -53,13 +52,12 @@ export default function AgendaDiaria() {
   }
 
   const motivosOptions = useMemo(() => {
-    return especialidades.map(e => ({ v: e.codigo, t: e.nombre }));
+    return especialidades.map(e => ({ value: e.codigo, label: e.nombre }));
   }, [especialidades]);
 
   async function cargarCitas() {
     setLoading(true);
     try {
-      // Si profesionalId es '0', el backend ahora lo maneja para traer todos
       const pId = profesionalId === '0' ? 0 : parseInt(profesionalId);
       const resp = await apiFetch(`${BACKEND_URL}/citas/profesional/${pId}/rango?inicio=${fecha}&fin=${fecha}`);
       setCitas(resp.data || []);
@@ -71,55 +69,50 @@ export default function AgendaDiaria() {
   }
 
   async function handleEliminar(citaId) {
-    const confirmado = await showConfirm('¿Estás seguro de que deseas eliminar esta cita?', {
-      confirmText: 'Eliminar',
-      cancelText: 'Cancelar'
-    });
-
-    if (!confirmado) return;
-
-    try {
-      await apiFetch(`${BACKEND_URL}/citas/${citaId}`, { method: 'DELETE' });
-      showToast('Cita eliminada correctamente');
-      cargarCitas();
-    } catch (err) {
-      showToast('Error eliminando cita: ' + err.message, 'error');
+    if (await showConfirm('¿Estás seguro de que deseas eliminar esta cita?')) {
+      try {
+        await apiFetch(`${BACKEND_URL}/citas/${citaId}`, { method: 'DELETE' });
+        showToast('Cita eliminada correctamente');
+        cargarCitas();
+      } catch (err) {
+        showToast('Error eliminando cita: ' + err.message, 'error');
+      }
     }
   }
 
-  function handleModificar(cita) {
-    // Calcular duración de la cita actual
-    let duracion = 20;
-    if (cita.hora && cita.hora_fin) {
-      const [hI, mI] = cita.hora.split(':').map(Number);
-      const [hF, mF] = cita.hora_fin.split(':').map(Number);
-      duracion = (hF * 60 + mF) - (hI * 60 + mI);
+  async function handleModificar(cita) {
+    try {
+      const resp = await apiFetch(`${BACKEND_URL}/citas/${cita.id}`);
+      const citaFull = resp.data;
+      
+      let duracion = 20;
+      if (citaFull.hora && citaFull.hora_fin) {
+        const [hI, mI] = citaFull.hora.split(':').map(Number);
+        const [hF, mF] = citaFull.hora_fin.split(':').map(Number);
+        duracion = (hF * 60 + mF) - (hI * 60 + mI);
+      }
+      setCitaAEditar({ ...citaFull, duracion });
+      setShowModalEdit(true);
+    } catch (err) {
+      showToast('Error cargando detalles de la cita', 'error');
     }
-    setCitaAEditar({ ...cita, duracion });
-    setShowModalEdit(true);
   }
 
   async function confirmarModificacion(datosNuevos) {
-    // Verificar si cambiaron los datos críticos
     const cambioFecha = datosNuevos.fecha !== citaAEditar.fecha;
     const cambioHora = datosNuevos.hora_inicio !== citaAEditar.hora;
     const cambioProf = datosNuevos.profesional_id !== citaAEditar.profesional_id;
-    const cambioMotivo = datosNuevos.especialidad_id !== citaAEditar.motivo_codigo;
+    const cambioMotivo = datosNuevos.especialidad_id !== citaAEditar.motivo_codigo; // Verify if motif_code is correct field in full object
 
     if (cambioFecha || cambioHora || cambioProf || cambioMotivo) {
-      const confirmado = await showConfirm('Has cambiado los datos de la cita. ¿Estás seguro de que deseas actualizarla? Se liberará el espacio anterior y se asignará el nuevo.', {
-        confirmText: 'Actualizar',
-        cancelText: 'Cancelar'
-      });
+      const confirmado = await showConfirm('Has cambiado los datos de la cita. ¿Deseas actualizarla?');
       if (!confirmado) return;
     }
 
     try {
-      // 1. Obtener datos completos del paciente para la nueva cita
-      const resp = await apiFetch(`${BACKEND_URL}/citas/${citaAEditar.id}`);
-      const citaFull = resp.data;
+      // citaAEditar is already the full object now
+      const citaFull = citaAEditar;
       
-      // 2. Preparar payload para la nueva cita
       const payload = {
         tipo_identificacion: citaFull.tipo_identificacion,
         numero_identificacion: citaFull.numero_identificacion,
@@ -147,14 +140,8 @@ export default function AgendaDiaria() {
         observacion: citaFull.observacion
       };
 
-      // 3. Eliminar la anterior
       await apiFetch(`${BACKEND_URL}/citas/${citaAEditar.id}`, { method: 'DELETE' });
-
-      // 4. Crear la nueva
-      await apiFetch(`${BACKEND_URL}/citas/`, {
-        method: 'POST',
-        body: JSON.stringify(payload)
-      });
+      await apiFetch(`${BACKEND_URL}/citas/`, { method: 'POST', body: JSON.stringify(payload) });
 
       showToast('Cita actualizada correctamente');
       setShowModalEdit(false);
@@ -167,21 +154,12 @@ export default function AgendaDiaria() {
 
   const handleSort = (key) => {
     let direction = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
+    if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
     setSortConfig({ key, direction });
-  };
-
-  const getSortIcon = (key) => {
-    if (sortConfig.key !== key) return null;
-    return sortConfig.direction === 'asc' ? <FaSortAmountUp className="sort-icon" /> : <FaSortAmountDown className="sort-icon" />;
   };
 
   const filteredAndSortedCitas = useMemo(() => {
     let result = [...citas];
-
-    // Filtro
     if (searchTerm) {
       const lowerSearch = searchTerm.toLowerCase();
       result = result.filter(c => 
@@ -189,224 +167,125 @@ export default function AgendaDiaria() {
         c.documento.toLowerCase().includes(lowerSearch) ||
         c.motivo.toLowerCase().includes(lowerSearch) ||
         c.profesional.toLowerCase().includes(lowerSearch) ||
-        (c.telefono_fijo && c.telefono_fijo.toLowerCase().includes(lowerSearch)) ||
-        (c.segundo_telefono_celular && c.segundo_telefono_celular.toLowerCase().includes(lowerSearch)) ||
-        (c.titular_segundo_celular && c.titular_segundo_celular.toLowerCase().includes(lowerSearch)) ||
-        (c.nombre_acompanante && c.nombre_acompanante.toLowerCase().includes(lowerSearch))
+        (c.telefono_fijo && c.telefono_fijo.toLowerCase().includes(lowerSearch))
       );
     }
-
-    // Ordenamiento
     result.sort((a, b) => {
       let aValue = a[sortConfig.key];
       let bValue = b[sortConfig.key];
-
       if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
     });
-
     return result;
   }, [citas, searchTerm, sortConfig]);
 
   const handleExportExcel = () => {
-    if (filteredAndSortedCitas.length === 0) {
-      showToast('No hay datos filtrados para exportar', 'error');
-      return;
-    }
-
+    if (filteredAndSortedCitas.length === 0) return showToast('No hay datos filtrados para exportar', 'error');
     const dataToExport = filteredAndSortedCitas.map(cita => ({
       'Hora': `${cita.hora} - ${cita.hora_fin || ''}`,
       'Paciente': cita.paciente,
       'Documento': cita.documento,
       'Motivo': cita.motivo,
-      'Tel. Fijo': cita.telefono_fijo || '',
-      '2do Celular': cita.segundo_telefono_celular || '',
-      'Titular 2do Cel': cita.titular_segundo_celular || '',
-      'Acompañante': cita.nombre_acompanante || '',
       'Profesional': cita.profesional || ''
     }));
-
-    const fileName = `Agenda_${fecha}_${profesionalId === '0' ? 'Todos' : profesionalId}.xlsx`;
-    exportToExcel(dataToExport, fileName, 'Agenda Diaria');
-    showToast('Archivo Excel generado correctamente');
+    exportToExcel(dataToExport, `Agenda_${fecha}.xlsx`, 'Agenda Diaria');
   };
 
-  return (
-    <div className="agenda-diaria-container">
-      <div className="agenda-diaria-panel">
-        <h2 className="agenda-diaria-titulo">
-          <FaCalendarAlt /> Agenda Diaria
-        </h2>
+  const getHeader = (label, key) => (
+    <div 
+      className="flex items-center gap-2 cursor-pointer select-none hover:text-blue-500 transition-colors"
+      onClick={() => handleSort(key)}
+    >
+      {label}
+      {sortConfig.key === key && (
+        sortConfig.direction === 'asc' ? <FaSortAmountUp /> : <FaSortAmountDown />
+      )}
+    </div>
+  );
 
-        <div className="agenda-diaria-filtros">
-          <div className="filtro-group">
-            <label className="filtro-label">Fecha</label>
-            <input 
-              type="date" 
-              className="filtro-input"
-              value={fecha} 
-              onChange={(e) => setFecha(e.target.value)}
-            />
-          </div>
+  const columns = [
+    { key: 'hora', label: getHeader('Hora', 'hora'), render: (_,r) => <span className="font-mono text-blue-900 font-bold">{r.hora}</span> },
+    { key: 'paciente', label: getHeader('Paciente', 'paciente') },
+    { key: 'documento', label: getHeader('Documento', 'documento'), render: (val) => <span className="font-mono text-xs">{val}</span> },
+    { key: 'motivo', label: getHeader('Motivo', 'motivo'), render: (val) => <Badge variant="info" size="sm">{val}</Badge> },
+    { key: 'telefono_fijo', label: 'Contacto', render: (val, row) => <div className="text-xs">{val} <br/> {row.telefono_celular}</div> },
+    { key: 'nombre_acompanante', label: 'Acompañante', render: (val) => val || '-' },
+  ];
 
-          <div className="filtro-group">
-            <label className="filtro-label">Profesional</label>
-            <select 
-              className="filtro-select"
-              value={profesionalId} 
-              onChange={(e) => setProfesionalId(e.target.value)}
-            >
-              <option value="0">-- Todos los profesionales --</option>
-              {profesionales.map(p => (
-                <option key={p.id} value={p.id}>{p.nombre_completo}</option>
-              ))}
-            </select>
-          </div>
+  if (profesionalId === '0') {
+    columns.push({
+       key: 'profesional',
+       label: getHeader('Profesional', 'profesional'),
+       render: (val) => <div className="flex items-center gap-1 text-xs text-slate-500"><FaUserMd /> {val}</div>
+    });
+  }
 
-          <div className="search-input-wrapper">
-            <label className="filtro-label">Buscar en agenda</label>
-            <div style={{ position: 'relative', display: 'flex', gap: '10px' }}>
-              <div style={{ position: 'relative', flex: 1 }}>
-                <input 
-                  type="text" 
-                  className="filtro-input"
-                  placeholder="Paciente, documento o motivo..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{ width: '100%' }}
-                />
-                <FaSearch className="search-icon-inside" />
-              </div>
-              <button 
-                onClick={handleExportExcel}
-                className="btn-excel"
-                title="Descargar a Excel"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  backgroundColor: '#1d6f42',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  padding: '0 15px',
-                  cursor: 'pointer',
-                  fontWeight: '600',
-                  height: '38px',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                <FaFileExcel /> Descargar a Excel
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="tabla-container">
-          <table className="agenda-tabla">
-            <thead>
-              <tr>
-                <th onClick={() => handleSort('hora')} className={sortConfig.key === 'hora' ? 'sort-active' : ''}>
-                  Hora {getSortIcon('hora')}
-                </th>
-                <th onClick={() => handleSort('paciente')} className={sortConfig.key === 'paciente' ? 'sort-active' : ''}>
-                  Paciente {getSortIcon('paciente')}
-                </th>
-                <th onClick={() => handleSort('documento')} className={sortConfig.key === 'documento' ? 'sort-active' : ''}>
-                  Documento {getSortIcon('documento')}
-                </th>
-                <th onClick={() => handleSort('motivo')} className={sortConfig.key === 'motivo' ? 'sort-active' : ''}>
-                  Motivo {getSortIcon('motivo')}
-                </th>
-                <th onClick={() => handleSort('telefono_fijo')} className={sortConfig.key === 'telefono_fijo' ? 'sort-active' : ''}>
-                  Tel. Fijo {getSortIcon('telefono_fijo')}
-                </th>
-                <th onClick={() => handleSort('segundo_telefono_celular')} className={sortConfig.key === 'segundo_telefono_celular' ? 'sort-active' : ''}>
-                  2do Celular {getSortIcon('segundo_telefono_celular')}
-                </th>
-                <th onClick={() => handleSort('titular_segundo_celular')} className={sortConfig.key === 'titular_segundo_celular' ? 'sort-active' : ''}>
-                  Titular 2do Cel {getSortIcon('titular_segundo_celular')}
-                </th>
-                <th onClick={() => handleSort('nombre_acompanante')} className={sortConfig.key === 'nombre_acompanante' ? 'sort-active' : ''}>
-                  Acompañante {getSortIcon('nombre_acompanante')}
-                </th>
-                {profesionalId === '0' && (
-                  <th onClick={() => handleSort('profesional')} className={sortConfig.key === 'profesional' ? 'sort-active' : ''}>
-                    Profesional {getSortIcon('profesional')}
-                  </th>
-                )}
-                <th style={{ textAlign: 'center', cursor: 'default' }}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan={profesionalId === '0' ? 6 : 5} className="empty-state">Cargando agenda...</td></tr>
-              ) : filteredAndSortedCitas.length === 0 ? (
-                <tr>
-                  <td colSpan={profesionalId === '0' ? 6 : 5} className="empty-state">
-                    <div className="empty-state-icon"><FaCalendarAlt /></div>
-                    {searchTerm ? 'No se encontraron resultados para tu búsqueda' : 'No hay citas programadas para este día'}
-                  </td>
-                </tr>
-              ) : (
-                filteredAndSortedCitas.map(cita => (
-                  <tr key={cita.id}>
-                    <td style={{ fontWeight: '600', color: '#2c5f8d' }}>
-                      {cita.hora} - {cita.hora_fin || ''}
-                    </td>
-                    <td>{cita.paciente}</td>
-                    <td>{cita.documento}</td>
-                    <td>
-                      <span className="badge-especialidad">{cita.motivo}</span>
-                    </td>
-                    <td>{cita.telefono_fijo || '-'}</td>
-                    <td>{cita.segundo_telefono_celular || '-'}</td>
-                    <td>{cita.titular_segundo_celular || '-'}</td>
-                    <td>{cita.nombre_acompanante || '-'}</td>
-                    {profesionalId === '0' && (
-                      <td>
-                        <span className="badge-profesional">
-                          <FaUserMd style={{ marginRight: '5px' }} />
-                          {cita.profesional}
-                        </span>
-                      </td>
-                    )}
-                    <td>
-                      <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
-                        <button 
-                          onClick={() => handleModificar(cita)}
-                          className="btn-accion-modificar"
-                          title="Modificar cita"
-                        >
-                          <FaEdit size={14} />
-                        </button>
-                        <button 
-                          onClick={() => handleEliminar(cita.id)}
-                          className="btn-accion-eliminar"
-                          title="Eliminar cita"
-                        >
-                          <FaTrash size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+  columns.push({
+    key: 'actions',
+    label: 'Acciones',
+    render: (_, row) => (
+      <div className="flex gap-2 justify-center">
+        <Button variant="ghost" size="sm" onClick={() => handleModificar(row)} className="!p-2 text-blue-600 hover:text-blue-800">
+          <FaEdit />
+        </Button>
+        <Button variant="ghost" size="sm" onClick={() => handleEliminar(row.id)} className="!p-2 text-red-600 hover:text-red-800">
+          <FaTrash />
+        </Button>
       </div>
+    )
+  });
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-6 animate-fadeIn">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-[var(--color-brand-primary)]">Agenda Diaria</h1>
+          <p className="text-[var(--color-text-secondary)]">Vista detallada de citas programadas por día.</p>
+        </div>
+        <Button onClick={handleExportExcel} variant="success" className="flex items-center gap-2">
+           <FaFileExcel /> Exportar
+        </Button>
+      </div>
+
+      <Card>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+          <Input 
+            type="date" 
+            label="Fecha de Agenda"
+            value={fecha} 
+            onChange={(e) => setFecha(e.target.value)}
+          />
+          <Select
+            label="Filtrar por Profesional"
+            value={profesionalId}
+            onChange={(e) => setProfesionalId(e.target.value)}
+            options={[{value:'0', label:'Todos los profesionales'}, ...profesionales.map(p => ({value:p.id, label:p.nombre_completo}))]}
+          />
+          <Input
+            placeholder="Buscar paciente, motivo..."
+            label="Búsqueda Rápida"
+            icon={<FaSearch />}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </Card>
+
+      <Card className="overflow-hidden">
+         <Table
+            columns={columns}
+            data={filteredAndSortedCitas}
+            emptyMessage={loading ? 'Cargando agenda...' : 'No hay citas programadas para este día.'}
+         />
+      </Card>
 
       <ModalAgendarCita 
         open={showModalEdit}
         especialidadId={citaAEditar?.motivo_codigo}
         motivosOptions={motivosOptions}
         duracionBase={20}
-        onClose={() => {
-          setShowModalEdit(false);
-          setCitaAEditar(null);
-        }}
+        onClose={() => {setShowModalEdit(false); setCitaAEditar(null);}}
         onConfirmar={confirmarModificacion}
         citaEdicion={citaAEditar}
       />

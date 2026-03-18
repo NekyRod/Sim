@@ -16,9 +16,10 @@ class EspecialidadRequest(BaseModel):
     codigo: str
     nombre: str
     activo: Optional[bool] = True
+    es_autogestion: Optional[bool] = False
 
 @router.get("/")
-def listar(solo_activos: bool = False):
+def listar(solo_activos: bool = True):
     return especialidades_control.listar_especialidades(solo_activos)
 
 @router.get("/{especialidad_id}")

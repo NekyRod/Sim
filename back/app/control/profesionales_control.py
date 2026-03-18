@@ -39,6 +39,16 @@ def obtener_profesional_by_id(profesional_id: int):
     
     return profesional
 
+def obtener_profesional_por_identificacion(identificacion: str):
+    row = profesionales_repo.obtener_profesional_por_identificacion(identificacion)
+    if not row:
+        return None
+    
+    # Agregar especialidades secundarias
+    row['especialidades_secundarias'] = profesionales_repo.obtener_especialidades_secundarias(row['id'])
+    
+    return row
+
 def crear_profesional(data: dict):
     # Extraer especialidades secundarias
     especialidades_secundarias = data.pop('especialidades_secundarias', [])

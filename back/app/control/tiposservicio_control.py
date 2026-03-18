@@ -3,8 +3,12 @@ from fastapi import HTTPException
 from app.database import tiposservicio_repo
 
 def listar_tipos_servicio():
-    tipos = tiposservicio_repo.get_all_tipos_servicio()
-    return {"data": tipos}
+    try:
+        tipos = tiposservicio_repo.get_all_tipos_servicio()
+        return {"data": tipos}
+    except Exception as e:
+        print(f"ERROR LISTAR TIPOS: {e}", flush=True)
+        raise HTTPException(status_code=500, detail=f"Error listing types: {str(e)}")
 
 def obtener_tipo_servicio(tipo_id: int):
     tipo = tiposservicio_repo.get_tipo_servicio_by_id(tipo_id)

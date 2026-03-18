@@ -1,0 +1,2772 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<title>Agenda Grupo Odontológico</title>
+<link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+<!-- Centro de alertas (campana + contador + lista) -->
+<div id="alert-center" class="alert-center" style="display:none;">
+  <button id="btn-alert-bell" type="button" class="alert-bell" aria-label="Ver alertas">
+    <span class="alert-bell-icon">🔔</span>
+    <span id="alert-badge" class="alert-badge">0</span>
+  </button>
+
+  <div id="alert-dropdown" class="alert-dropdown" style="display:none;">
+    <div class="alert-dropdown-header">Alertas</div>
+    <div id="alert-list" class="alert-list"></div>
+    <div id="alert-empty" class="alert-empty">No hay alertas registradas.</div>
+  </div>
+</div>
+
+<header>
+	<!-- Barra de búsqueda global arriba de todo -->
+  <div class="header-search-top">
+    <input id="search-paciente" type="text"
+           placeholder="Busca pacientes por nombre o documento de ID">
+    <div id="search-suggestions" class="search-suggestions"></div>
+  </div>
+
+  <!-- Logo y navegación en la segunda fila -->
+	<div class="header-bottom">
+		<div class="logo-container">
+			<img src="logo_goi.jpg" alt="Logo GOI" class="logo-img">
+		</div>
+		<nav id="nav-main" class="nav-main">
+			<button id="menu0" class="active">
+				<span class="icon">📋</span>
+				<span>Agendamiento</span>
+			</button>
+			<button id="menu1">
+				<span class="icon">🗓️</span>
+				<span>Control de Agendas</span>
+			</button>
+			<button id="menu2">
+				<span class="icon">📅</span>
+				<span>Agenda diaria</span>
+			</button>
+			<button id="menu3">
+				<span class="icon">📆</span>
+				<span>Agenda semanal</span>
+			</button>
+			<button id="btn-crear-disponibilidad">
+				<span class="icon">🕒</span>
+				<span>Crear Disponibilidad</span>
+			</button>
+			<button id="menu4">
+				<span class="icon">📊</span>
+				<span>Informes</span>
+			</button>
+			<button id="menu-pacientes">
+				<span class="icon">👤</span>
+				<span>Pacientes</span>
+			</button>
+			<!-- Nuevo: Configuración -->
+			<button id="menu-config">
+				<span class="icon">⚙️</span>
+				<span>Configuración</span>
+			</button>
+			<button id="btn-logout">
+				<span class="icon">⏻</span>
+			</button>
+		
+		</nav>
+
+		<!-- Submenú Configuración (oculto por defecto) -->
+		<nav id="nav-config" class="nav-config" style="display: none;">
+			<div class="config-titulo">⚙️ Gestión</div>
+			<!-- <button id="btn-config-pacientes" class="config-btn active">👤 Pacientes</button> -->
+			<button class="config-btn">👨‍⚕️ Profesionales</button>
+			<button class="config-btn">⚙️ Tipos Servicio</button>
+			<button class="config-btn">📋 Motivos Cita</button>
+			<button class="config-btn">🏥 Tipos PBS</button>
+			<button class="config-btn">🎉 Festivos</button>
+			<button class="config-btn">🆔 Tipos ID</button>
+			<button class="config-btn">🏙️ Ciudades</button>
+			<button id="btn-config-regresar" class="config-btn volver">↩️ Regresar</button>
+		</nav>
+	</div>
+</header>
+
+<main>
+	<section id="control-agendas-section">
+    <div class="controls">
+      <label for="year-select">Año:</label>
+      <select id="year-select"></select>
+
+      <label for="month-select">Mes:</label>
+      <select id="month-select">
+        <option>Enero</option><option>Febrero</option><option>Marzo</option><option>Abril</option>
+        <option>Mayo</option><option>Junio</option><option>Julio</option><option>Agosto</option>
+        <option>Septiembre</option><option>Octubre</option><option>Noviembre</option><option>Diciembre</option>
+      </select>
+
+      <label for="professional-select">Profesional:</label>
+      <select id="professional-select">
+        <option>DR RAMON ACEVEDO 1143373795</option>
+        <option>DRA MACIEL VALENCIA 30238388</option>
+        <option>DRA ANNY HENRIQUEZ 53106343</option>
+        <option>DRA SANDY VITOLA 1143447511</option>
+        <option>DRA MILENA MORA 52427920</option>
+        <option>DRA JULIANA MENDOZA 1018505450</option>
+        <option>DRA ELIANA ORTEGON 1053811550</option>
+        <option>DR DIEGO BECERRA 1143373795</option>
+        <option>Todos</option>
+      </select>
+    </div>
+
+    <div id="calendars-container" class="calendars"></div>
+
+    <!-- Festivos ocultos -->
+    <div id="hidden-holidays" style="display:none;">
+      <div data-day="1" data-month="1"></div>   <!-- Año Nuevo 1 de Enero -->
+      <div data-day="6" data-month="1"></div>   <!-- Día de Reyes -->
+      <div data-day="24" data-month="3"></div>  <!-- Ejemplo festivo -->
+	  <div data-day="17" data-month="4"></div>  <!-- Ejemplo festivo -->
+	  <div data-day="18" data-month="4"></div>  <!-- Ejemplo festivo -->
+	  <div data-day="1" data-month="5"></div>  <!-- Ejemplo festivo -->
+	  <div data-day="2" data-month="6"></div>  <!-- Ejemplo festivo -->
+	  <div data-day="23" data-month="6"></div>  <!-- Ejemplo festivo -->
+	  <div data-day="30" data-month="6"></div>  <!-- Ejemplo festivo -->
+	  <div data-day="7" data-month="8"></div>  <!-- Ejemplo festivo -->
+	  <div data-day="18" data-month="8"></div>  <!-- Ejemplo festivo -->
+	  <div data-day="13" data-month="10"></div>  <!-- Ejemplo festivo -->
+	  <div data-day="3" data-month="11"></div>  <!-- Ejemplo festivo -->
+	  <div data-day="17" data-month="11"></div>  <!-- Ejemplo festivo -->
+	  <div data-day="8" data-month="12"></div>  <!-- Ejemplo festivo -->
+	  <div data-day="25" data-month="12"></div>  <!-- Ejemplo festivo -->
+      <!-- Más días festivos según Colombia -->
+    </div>
+  </section>
+  
+  <!-- Sección de Agendamiento --> 
+  <section id="agendamiento-section">
+		<div class="agendamiento-wrapper">
+			<div class="modal-content modal-content-inline">
+			<div class="modal-tabs">
+				<button class="tab-btn active" data-tab="tab-paciente-main">Datos del Paciente</button>
+				<button class="tab-btn" data-tab="tab-cita-main">Programación de la Cita</button>
+			</div>
+			<form id="appointment-form-main">
+				<!-- TAB 1 -->
+				<div class="tab-section active" id="tab-paciente-main">
+					<label>Tipo de Identificación
+						<select id="tipo-identificacion" required>
+						<option value="">Seleccione uno</option>
+						<option value="CC">Cédula de ciudadanía</option>
+						<option value="TI">Tarjeta de identidad</option>
+						<option value="CE">Cédula de extranjería</option>
+						<option value="PA">Pasaporte</option>
+						</select>
+					</label>
+					<label>Número de Identificación
+						<input id="numero-identificacion" type="number" required min="1" step="1" pattern="\d+">
+					</label>
+					<label>Nombre del Paciente
+						<input id="nombre-paciente" type="text" maxlength="100" pattern="[A-Za-z\s]+">
+					</label>
+					<label>Teléfono fijo
+						<input id="telefono-fijo" type="text" maxlength="10" pattern="\d{10}">
+					</label>
+					<label>Teléfono celular
+						<input id="telefono-celular" type="text" maxlength="10" pattern="\d{10}">
+					</label>
+					<label>Segundo número de celular
+						<input id="telefono-celular2" type="text" maxlength="10" pattern="\d{10}">
+					</label>
+					<label>A quién pertenece
+					  <input id="pertenece-celular2" type="text" maxlength="100">
+					</label>
+					<label>Dirección
+						<textarea id="direccion" maxlength="100"></textarea>
+					</label>
+					<label>Correo electrónico
+						<input id="correo-electronico" type="email" required>
+					</label>
+					<label>Lugar de Residencia
+						<select id="lugar-residencia" required>
+						<option value="">Seleccione uno</option>
+						<option>Bogotá</option>
+						<option>Medellín</option>
+						<option>Cali</option>
+						<option>Manizales</option>
+						<option>Pereira</option>
+						<option>Cartagena</option>
+						<option>Santa Marta</option>
+						<option>Boyacá</option>
+						</select>
+					</label>
+					<label>Fecha de nacimiento
+						<input id="fecha-nacimiento" type="date" required>
+					</label>
+					<!-- Bloque acompañante: se muestra solo si tipo doc = TI -->
+					<div id="bloque-acompanante" style="display:none; margin-top:8px;">
+					  <label>Tipo de Documento Acompañante
+						<select id="tipo-doc-acompanante">
+						  <option value="">Seleccione uno</option>
+						  <option value="CC">Cédula de ciudadanía</option>
+						  <option value="TI" disabled>Tarjeta de identidad</option>
+						  <option value="CE">Cédula de extranjería</option>
+						  <option value="PA">Pasaporte</option>
+						</select>
+					  </label>
+					  <label>Nombre de la persona acompañante
+						<input id="nombre-acompanante" type="text" maxlength="100">
+					  </label>
+					  <label>Parentesco acompañante
+						<input id="parentesco-acompanante" type="text" maxlength="100">
+					  </label>
+					</div>
+				</div>
+				<!-- TAB 2 -->
+				<div class="tab-section" id="tab-cita-main">
+				<label>Fecha de programación
+					<input type="date" id="fecha-programacion-main" required>
+				</label>
+				<label>Fecha solicitada por el paciente
+					<input type="date" id="fecha-solicitada-main" readonly>
+				</label>
+				<label>Observación de la cita
+					<textarea maxlength="255"></textarea>
+				</label>
+
+				<label>Tipo de servicio
+					<div style="display:flex; align-items:center; gap:10px;">
+						<select id="tipo-servicio" required style="flex:1;">
+						<option value="">Seleccione uno</option>
+						<option value="PBS">Plan de Beneficios en Salud</option>
+						<option value="PARTICULAR">Particular</option>
+						</select>
+						<label style="font-weight:400; display:flex; align-items:center; gap:4px; white-space:nowrap;">
+						<input type="checkbox" id="chk-6meses">
+						Hace más de 6 meses no asiste a odontología
+						</label>
+					</div>
+				</label>
+
+				<label id="grupo-tipo-pbs" style="display:none;">Tipo de PBS
+					<select id="tipo-pbs">
+						<option value="">Seleccione uno</option>
+						<option value="COMPARTIDOS">Compartidos</option>
+						<option value="PBS">PBS</option>
+						<option value="PBS-S">PBS-Subsidiado</option>
+					</select>
+				</label>
+
+				<label>Motivo Cita
+					<select id="motivo-cita" required>
+						<option value="">Seleccione uno</option>
+					</select>
+				</label>
+				<label>Profesional
+					<select id="profesional-cita" required>
+						<option value="">Seleccione uno</option>
+					</select>
+				</label>
+
+				<label>Hora recomendada
+					<input id="hora-recomendada" type="time" min="07:00" max="17:00" step="900">
+				</label>
+				<button type="submit" class="confirmar-cita-btn">Confirmar Cita</button>
+				</div>
+			</form>
+			</div>
+		</div>
+	</section>
+
+  <section id="agenda-diaria-section" class="agenda-diaria-seccion" style="display:none;">
+    <div class="agenda-diaria-header">
+		<button class="btn-descargar-excel">Descargar en Excel</button>
+	  </div>
+	  <div class="agenda-diaria-wrapper">
+		<table class="agenda-diaria-tabla">
+		  <thead>
+			<tr>
+			  <th>Fecha</th>
+			  <th>Hora</th>
+			  <th>Tipo Doc</th>
+			  <th>No Doc</th>
+			  <th>Nombre Paciente</th>
+			  <th>Especialidad</th>
+			  <th>Servicio</th>
+			  <th>SIES PBS</th>
+			  <th>Teléfono 1</th>
+			  <th>Teléfono 2</th>
+			  <th>Dato Teléfono 2</th>
+			  <th>Prof. Cita</th>
+			  <th>Motivo</th>
+			  <th>Observaciones</th>
+			</tr>
+		  </thead>
+		  <tbody>
+			<tr>
+			  <td>01/11/2025</td>
+			  <td>6:00</td>
+			  <td>CC</td>
+			  <td>524176268</td>
+			  <td>HELEN MELISA LEON CAJAR</td>
+			  <td>CIRUGIA ORAL</td>
+			  <td>PBS</td>
+			  <td>PLAN DE BENEFICIOS EN SALUD</td>
+			  <td>3102589741</td>
+			  <td>3102589741</td>
+			  <td>MAMA</td>
+			  <td style="background:#b4e1a2;">MACIEL VALENCIA CORREA</td>
+			  <td>1RA VEZ</td>
+			  <td></td>
+			</tr>
+			<!-- Más filas ejemplo -->
+			<tr>
+			  <td>01/11/2025</td>
+			  <td>6:20</td>
+			  <td>CD</td>
+			  <td>1023654655</td>
+			  <td>YAFET ANTONIO DIAZ MUÑOZ</td>
+			  <td>O. GENERAL</td>
+			  <td>PBS</td>
+			  <td>COMPARTIDOS</td>
+			  <td>3059856444</td>
+			  <td>3025698745</td>
+			  <td>PAPA</td>
+			  <td style="background:#b6dffb;">MARTHA MILENA MORA SARMIENTO</td>
+			  <td>RESINA</td>
+			  <td></td>
+			</tr>
+			<tr>
+			  <td>01/11/2025</td>
+			  <td>6:40</td>
+			  <td>CE</td>
+			  <td>36592546</td>
+			  <td>LUCIA ALFONSO GOMEZ</td>
+			  <td>O. GENERAL</td>
+			  <td>PARTICULAR</td>
+			  <td></td>
+			  <td>3156598745</td>
+			  <td>3165698745</td>
+			  <td>HIJO</td>
+			  <td style="background:#ffd4e0;">ANNY JULIETH HENRIQUEZ DIAZ</td>
+			  <td>CONTROL</td>
+			  <td></td>
+			</tr>
+			<tr>
+			  <td>01/11/2025</td>
+			  <td>7:00</td>
+			  <td>CC</td>
+			  <td>79714835</td>
+			  <td>NELSON ARMANDO RODRIGUEZ</td>
+			  <td>HIGIENE ORAL</td>
+			  <td>PARTICULAR</td>
+			  <td></td>
+			  <td>3025254441</td>
+			  <td>3004812361</td>
+			  <td>PAREJA</td>
+			  <td style="background:#ffd4e0;">ANNY JULIETH HENRIQUEZ DIAZ</td>
+			  <td>CONTROL</td>
+			  <td></td>
+			</tr>
+			<tr>
+			  <td>01/11/2025</td>
+			  <td>7:20</td>
+			  <td>CC</td>
+			  <td>52469844</td>
+			  <td>ROSE CLEMENTINE</td>
+			  <td>ENDODONCIA</td>
+			  <td>PBS</td>
+			  <td>PLAN BENEFICOS EN SALUD</td>
+			  <td>3156589852</td>
+			  <td>3125698541</td>
+			  <td>ESPOSO</td>
+			  <td style="background:#FFFFE0;">YESSIKA LIZETH LARGO HERNANDEZ</td>
+			  <td>CONTROL</td>
+			  <td></td>
+			</tr>
+			<tr>
+			  <td>01/11/2025</td>
+			  <td>7:40</td>
+			  <td>NUIP</td>
+			  <td>1028562305</td>
+			  <td>OSCAR DAVID MARTINEZ</td>
+			  <td>ODONTOPEDIATRIA</td>
+			  <td>PBS</td>
+			  <td>PLAN BENEFICOS EN SALUD</td>
+			  <td>3215648955</td>
+			  <td>3135264895</td>
+			  <td>MADRE</td>
+			  <td style="background:#b6dffb;">MARTHA MILENA MORA SARMIENTO</td>
+			  <td>CONTROL</td>
+			  <td></td>
+			</tr>
+			<tr>
+			  <td>01/11/2025</td>
+			  <td>8:00</td>
+			  <td>CC</td>
+			  <td>1052659821</td>
+			  <td>MARITZA MARIA LOPEZ</td>
+			  <td>PROTESIS</td>
+			  <td>PARTICULAR</td>
+			  <td></td>
+			  <td>3168926588</td>
+			  <td>6015698255</td>
+			  <td>HIJO</td>
+			  <td style="background:#b4e1a2;">MACIEL  VALENCIA CORREA</td>
+			  <td>CONTROL</td>
+			  <td></td>
+			</tr>
+		  </tbody>
+		</table>
+	  </div>
+  </section>
+
+  <section id="agenda-semanal-section" style="display:none;">
+      <div class="agenda-semanal-header">
+    <label for="profesional-dropdown" style="font-weight:bold;">Profesional:</label>
+    <select id="profesional-dropdown" class="agenda-select">
+      <option>Dra. GUZMAN VIVANCO, ANA MARIA</option>
+      <option>Dr(a). ALFARO PÉREZ, MIRIAM ESTELA</option>
+      <option>Dra. GAVIRIA DUQUE, MARIA FERNANDA</option>
+      <option>Dra. CADENA BARBOSA, LAURA PILAR</option>
+      <option>Dra. ECHEVERRY RIAÑO, MARIA CAMILA</option>
+      <option>Dra. GARCIA PARRA, ADRIANA YORMARY</option>
+    </select>
+    <button class="btn2-descargar-excel">Descargar en Excel</button>
+  </div>
+  <div class="agenda-semanal-wrapper">
+    <table class="agenda-semanal-tabla">
+      <thead>
+        <tr>
+          <th>Hora</th>
+          <th>Lunes</th>
+          <th>Martes</th>
+          <th>Miércoles</th>
+          <th>Jueves</th>
+          <th>Viernes</th>
+          <th>Sábado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Rango de horas dinámico desde 6:20 am hasta 6:40 pm, cada 20 min -->
+      </tbody>
+    </table>
+  </div>
+  </section>
+
+  <!-- Sección de Crear Disponibilidad --> 	 
+  <section id="crear-disponibilidad-section" style="display:none;">
+	<div class="crear-dispo-wrapper">
+		<div class="crear-dispo-panel">
+		<h2>Crear Disponibilidad</h2>
+
+		<!-- Lista de profesionales -->
+		<label class="crear-dispo-label">
+			Profesional
+			<select id="dispo-profesional-select">
+			<!-- Usa los mismos profesionales de Control de Agendas -->
+			<option value="">Seleccione un profesional</option>
+			<option>DR RAMON ACEVEDO 1143373795</option>
+			<option>DRA MACIEL VALENCIA 30238388</option>
+			<option>DRA ANNY HENRIQUEZ 53106343</option>
+			<option>DRA SANDY VITOLA 1143447511</option>
+			<option>DRA MILENA MORA 52427920</option>
+			<option>DRA JULIANA MENDOZA 1018505450</option>
+			<option>DRA ELIANA ORTEGON 1053811550</option>
+			<option>DR DIEGO BECERRA 1143373795</option>
+			<!-- ... resto de opciones ... -->
+			</select>
+		</label>
+
+		<!-- Tabla de rangos -->
+		<div id="dispo-tabla-container" style="display:none;">
+			<table class="dispo-tabla">
+			<thead>
+				<tr>
+				<th>Lunes</th>
+				<th>Martes</th>
+				<th>Miércoles</th>
+				<th>Jueves</th>
+				<th>Viernes</th>
+				<th>Sábado</th>
+				</tr>
+			</thead>
+			<tbody>
+				<!-- Fila 2: celdas donde se acumulan los rangos -->
+				<tr id="fila-rangos">
+				<td data-dia="0" class="dispo-celda-rangos"></td>
+				<td data-dia="1" class="dispo-celda-rangos"></td>
+				<td data-dia="2" class="dispo-celda-rangos"></td>
+				<td data-dia="3" class="dispo-celda-rangos"></td>
+				<td data-dia="4" class="dispo-celda-rangos"></td>
+				<td data-dia="5" class="dispo-celda-rangos"></td>
+				</tr>
+				<!-- Fila 3: controles de agregar rango por día -->
+				<tr id="fila-controles">
+				<!-- Se repite el mismo patrón para cada día -->
+				<td>
+					<div class="dispo-control-dia" data-dia="0">
+					<div class="dispo-subtitulo">Agregar rango</div>
+					<div class="dispo-rango-linea">
+						<span>Desde</span>
+						<input type="time" class="hora-desde" step="900">
+					</div>
+					<div class="dispo-rango-linea">
+						<span>Hasta</span>
+						<input type="time" class="hora-hasta" step="900">
+					</div>
+					<button type="button" class="btn-agregar-rango">Agregar rango</button>
+					</div>
+				</td>
+				<td>
+					<div class="dispo-control-dia" data-dia="1">
+					<div class="dispo-subtitulo">Agregar rango</div>
+					<div class="dispo-rango-linea">
+						<span>Desde</span>
+						<input type="time" class="hora-desde" step="900">
+					</div>
+					<div class="dispo-rango-linea">
+						<span>Hasta</span>
+						<input type="time" class="hora-hasta" step="900">
+					</div>
+					<button type="button" class="btn-agregar-rango">Agregar rango</button>
+					</div>
+				</td>
+				<td>
+					<div class="dispo-control-dia" data-dia="2">
+					<div class="dispo-subtitulo">Agregar rango</div>
+					<div class="dispo-rango-linea">
+						<span>Desde</span>
+						<input type="time" class="hora-desde" step="900">
+					</div>
+					<div class="dispo-rango-linea">
+						<span>Hasta</span>
+						<input type="time" class="hora-hasta" step="900">
+					</div>
+					<button type="button" class="btn-agregar-rango">Agregar rango</button>
+					</div>
+				</td>
+				<td>
+					<div class="dispo-control-dia" data-dia="3">
+					<div class="dispo-subtitulo">Agregar rango</div>
+					<div class="dispo-rango-linea">
+						<span>Desde</span>
+						<input type="time" class="hora-desde" step="900">
+					</div>
+					<div class="dispo-rango-linea">
+						<span>Hasta</span>
+						<input type="time" class="hora-hasta" step="900">
+					</div>
+					<button type="button" class="btn-agregar-rango">Agregar rango</button>
+					</div>
+				</td>
+				<td>
+					<div class="dispo-control-dia" data-dia="4">
+					<div class="dispo-subtitulo">Agregar rango</div>
+					<div class="dispo-rango-linea">
+						<span>Desde</span>
+						<input type="time" class="hora-desde" step="900">
+					</div>
+					<div class="dispo-rango-linea">
+						<span>Hasta</span>
+						<input type="time" class="hora-hasta" step="900">
+					</div>
+					<button type="button" class="btn-agregar-rango">Agregar rango</button>
+					</div>
+				</td>
+				<td>
+					<div class="dispo-control-dia" data-dia="5">
+					<div class="dispo-subtitulo">Agregar rango</div>
+					<div class="dispo-rango-linea">
+						<span>Desde</span>
+						<input type="time" class="hora-desde" step="900">
+					</div>
+					<div class="dispo-rango-linea">
+						<span>Hasta</span>
+						<input type="time" class="hora-hasta" step="900">
+					</div>
+					<button type="button" class="btn-agregar-rango">Agregar rango</button>
+					</div>
+				</td>
+				</tr>
+			</tbody>
+			</table>
+
+			<div class="crear-dispo-footer">
+			<button type="button" id="btn-guardar-disponibilidad" class="btn-guardar-disponibilidad">
+				Guardar Disponibilidad
+			</button>
+			</div>
+		</div>
+		</div>
+	</div>
+  </section>
+  <section id="informes-section" style="display:none;">
+    <div class="informes-header">
+    <h2>Reporte Trimestral</h2>
+    <button class="btn3-descargar-excel">Descargar en Excel</button>
+  </div>
+  <div class="informes-wrapper">
+    <table class="informes-tabla">
+      <thead>
+        <tr>
+          <th>Tipo de Documento</th>
+          <th>No de Documento</th>
+          <th>Nombre Paciente</th>
+          <th>Fecha de Nacimiento</th>
+          <th>Fecha en que asignó la cita</th>
+          <th>Fecha en la que quiere el paciente</th>
+          <th>Fecha en a que quedó programada la cita</th>
+          <th>Diferencia entre fecha de agendamiento y fecha de programación</th>
+          <th>Género</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>CC</td>
+          <td>524176268</td>
+          <td>HELEN MELISA LEON CAJAR</td>
+          <td>2002-11-06</td>
+          <td>2025-05-17</td>
+          <td>2025-05-17</td>
+          <td>2025-05-17</td>
+          <td>0 días</td>
+          <td>M</td>
+        </tr>
+        <tr>
+          <td>CD</td>
+          <td></td>
+          <td>YAFET ANTONIO DIAZ MUÑOZ</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>H</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  </section>
+  <section id="config-section" style="display:none;">
+	  <div class="config-wrapper">
+		<!-- Panel central por ahora solo CRUD pacientes -->
+			<div class="crud-header-actions">
+			  <!-- Línea 1: 10 botones -->
+			  <button id="btn-datos-personales" class="btn-historia-clinica active">
+				<span class="icon">📝</span>
+				<span>Datos Personales</span>
+			  </button>
+			  <button id="btn-historia-clinica" class="btn-historia-clinica">
+				<span class="icon">📋</span>
+				<span>Historia Clínica</span>
+			  </button>
+			  <button id="btn-consulta" class="btn-historia-clinica">
+				<span class="icon">💊</span>
+				<span>Consulta de atención</span>
+			  </button>
+			  <button id="btn-evoluciones" class="btn-historia-clinica">
+				<span class="icon">📈</span>
+				<span>Evoluciones</span>
+			  </button>
+			  <button id="btn-anamnesis" class="btn-historia-clinica">
+				<span class="icon">📝</span>
+				<span>Ficha Anamnesis</span>
+			  </button>
+			  <button id="btn-odontograma" class="btn-historia-clinica">
+				<span class="icon">🦷</span>
+				<span>Odontograma</span>
+			  </button>
+			  <button id="btn-rx-documentos" class="btn-historia-clinica">
+				<span class="icon">🩻</span>
+				<span>Rx y Documentos</span>
+			  </button>
+			  <button id="btn-recetas" class="btn-historia-clinica">
+				<span class="icon">💉</span>
+				<span>Recetas</span>
+			  </button>
+			  <button id="btn-doc-clinicos" class="btn-historia-clinica">
+				<span class="icon">📄</span>
+				<span>Documentos clínicos</span>
+			  </button>
+			  <button id="btn-consentimientos" class="btn-historia-clinica">
+				<span class="icon">✍️</span>
+				<span>Consentimientos</span>
+			  </button>
+			</div>
+
+<!-- Encabezado de Datos Personales (Solo Lectura) -->
+		<div id="encabezado-paciente" class="encabezado-paciente" style="display: none;">
+		  <div class="encabezado-titulo">Datos Personales</div>
+		  
+		  <div class="encabezado-grid">
+			<!-- Columna 1 -->
+			<div class="encabezado-col">
+			  <div class="dato-item">
+				<span class="dato-label">Nombre Completo</span>
+				<span class="dato-valor" id="enc-nombre"></span>
+			  </div>
+			  <div class="dato-item">
+				<span class="dato-label">Número Documento</span>
+				<span class="dato-valor" id="enc-documento"></span>
+			  </div>
+			  <div class="dato-item">
+				<span class="dato-label">Fecha Nacimiento</span>
+				<span class="dato-valor" id="enc-fecha-nacimiento"></span>
+			  </div>
+			  <div class="dato-item">
+				<span class="dato-label">Edad</span>
+				<span class="dato-valor" id="enc-edad"></span>
+			  </div>
+			</div>
+
+			<!-- Columna 2 -->
+			<div class="encabezado-col">
+			  <div class="dato-item">
+				<span class="dato-label">Teléfono</span>
+				<span class="dato-valor" id="enc-telefono"></span>
+			  </div>
+			  <div class="dato-item">
+				<span class="dato-label">Teléfono Celular</span>
+				<span class="dato-valor" id="enc-celular"></span>
+			  </div>
+			  <div class="dato-item">
+				<span class="dato-label">Correo Electrónico</span>
+				<span class="dato-valor" id="enc-email"></span>
+			  </div>
+			  <div class="dato-item">
+				<span class="dato-label">Dirección</span>
+				<span class="dato-valor" id="enc-direccion"></span>
+			  </div>
+			</div>
+
+			<!-- Columna 3 -->
+			<div class="encabezado-col">
+			  <div class="dato-item">
+				<span class="dato-label">Sexo</span>
+				<span class="dato-valor" id="enc-sexo"></span>
+			  </div>
+			  <div class="dato-item">
+				<span class="dato-label">Lugar de Residencia</span>
+				<span class="dato-valor" id="enc-lugar-residencia"></span>
+			  </div>
+			  <div class="dato-item">
+				<span class="dato-label">Segundo Celular</span>
+				<span class="dato-valor" id="enc-celular2"></span>
+			  </div>
+			  <div class="dato-item">
+				<span class="dato-label">A quién pertenece</span>
+				<span class="dato-valor" id="enc-pertenece"></span>
+			  </div>
+			</div>
+
+			<!-- Columna 4 -->
+			<div class="encabezado-col">
+			  <div class="dato-item">
+				<span class="dato-label">Acompañante</span>
+				<span class="dato-valor" id="enc-acompanante"></span>
+			  </div>
+			  <div class="dato-item">
+				<span class="dato-label">Parentesco</span>
+				<span class="dato-valor" id="enc-parentesco"></span>
+			  </div>
+			</div>
+		  </div>
+		</div>
+
+
+
+		<div id="config-panel">
+		  <div class="crud-pacientes-main">
+			
+			<div class="crud-tabs">
+			  <button class="crud-tab-btn active" data-tab="crud-tab-paciente">Datos del Paciente</button>
+			</div>
+			<form id="crud-pacientes-form" class="crud-form">
+			  <!-- TAB Paciente (exacto copy de tab-paciente-main) -->
+			  <div class="tab-section active" id="crud-tab-paciente">
+				<label>Tipo de Identificación
+				  <select id="crud-tipo-identificacion" required>
+					<option value="">Seleccione uno</option>
+					<option value="CC">Cédula de ciudadanía</option>
+					<option value="TI">Tarjeta de identidad</option>
+					<option value="CE">Cédula de extranjería</option>
+					<option value="PA">Pasaporte</option>
+				  </select>
+				</label>
+				<label>Número de Identificación
+				  <input id="crud-numero-identificacion" type="number" required min="1" step="1" pattern="\d+">
+				</label>
+				<!-- Todos los campos exactos como proporcionaste -->
+				<label>Nombre del Paciente<input id="crud-nombre-paciente" type="text" maxlength="100" pattern="[A-Za-z\s]+"></label>
+				<label>Teléfono fijo<input id="crud-telefono-fijo" type="text" maxlength="10" pattern="\d{10}"></label>
+				<label>Teléfono celular<input id="crud-telefono-celular" type="text" maxlength="10" pattern="\d{10}" required></label>
+				<label>Segundo número de celular<input id="crud-telefono-celular2" type="text" maxlength="10" pattern="\d{10}"></label>
+				<label>A quién pertenece<input id="crud-pertenece-celular2" type="text" maxlength="100"></label>
+				<label>Dirección<textarea id="crud-direccion" maxlength="100"></textarea></label>
+				<label>Correo electrónico<input id="crud-correo-electronico" type="email" required></label>
+				<label>Lugar de Residencia
+				  <select id="crud-lugar-residencia" required>
+					<option value="">Seleccione uno</option><option>Bogotá</option><option>Medellín</option><option>Cali</option><option>Manizales</option><option>Pereira</option><option>Cartagena</option><option>Santa Marta</option><option>Boyacá</option>
+				  </select>
+				</label>
+				<label>Fecha de nacimiento<input id="crud-fecha-nacimiento" type="date" required></label>
+				<!-- Bloque acompañante -->
+				<div id="crud-bloque-acompanante" style="display:none; margin-top:8px;">
+				  <label>Tipo de Documento Acompañante
+					<select id="crud-tipo-doc-acompanante">
+					  <option value="">Seleccione uno</option><option value="CC">Cédula de ciudadanía</option><option value="TI" disabled>Tarjeta de identidad</option><option value="CE">Cédula de extranjería</option><option value="PA">Pasaporte</option>
+					</select>
+				  </label>
+				  <label>Nombre de la persona acompañante<input id="crud-nombre-acompanante" type="text" maxlength="100"></label>
+				  <label>Parentesco acompañante<input id="crud-parentesco-acompanante" type="text" maxlength="100"></label>
+				</div>
+			  </div>
+			  <div class="crud-buttons">
+				<button type="button" id="btn-crud-guardar" class="btn-crud">Guardar</button>
+				<button type="button" id="btn-crud-eliminar" class="btn-crud">Eliminar</button>
+				<button type="button" id="btn-crud-cerrar" class="btn-crud">Cerrar</button>
+			  </div>
+			</form>
+		  </div>
+		</div>
+	  </div>
+
+		<!-- Timeline Historia Clínica (oculto por defecto) -->
+		<div id="timeline-historia-clinica" style="display: none;">
+		<div class="historia-container">
+		  <div class="historia-header">
+			<h2>Historial</h2>
+			<div class="historia-filters">
+			  <label>Filtrar por mes:
+				<select id="filter-mes">
+				  <option>Todos los meses</option>
+				  <option>Enero 2026</option>
+				  <option>Diciembre 2025</option>
+					<option>Octubre 2024</option>
+					<option>Septiembre 2022</option>
+				</select>
+			  </label>
+			  <label>Filtrar por:
+				<select id="filter-tipo">
+				  <option>Todos</option>
+				  <option>Presupuestos</option>
+				  <option>Consentimientos</option>
+				  <option>Documentos</option>
+					<option>Evoluciones</option>
+					<option>Antecedentes</option>
+				</select>
+			  </label>
+			  <button class="btn-print">🖨️</button>
+			</div>
+		  </div>
+
+		  <div class="timeline-container">
+			  <!-- Evento 1: Presupuesto -->
+			<div class="timeline-item">
+			  <div class="timeline-date">dic. 1, 2025</div>
+			  <div class="timeline-marker"></div>
+			  <div class="timeline-content">
+				<div class="evento-header presupuesto">
+				  <span>PRESUPUESTO CREADO</span>
+				  <span class="icono">📊</span>
+				</div>
+				<div class="evento-body">
+				  <p><strong>Nuevo plan de tratamiento</strong></p>
+				  <p class="evento-info">Dr.(a) ANA MARÍA GUZMAN VIVANCO, #Número de identificación: 52417626, 9:39:30</p>
+				</div>
+			  </div>
+			</div>
+
+			  <!-- Evento 2: Consentimiento -->
+			<div class="timeline-item">
+			  <div class="timeline-date">oct. 24, 2024</div>
+			  <div class="timeline-marker"></div>
+			  <div class="timeline-content">
+				<div class="evento-header consentimiento">
+				  <span>CONSENTIMIENTO GUARDADO</span>
+				  <span class="icono">📝</span>
+				</div>
+				<div class="evento-body">
+				  <p>Se ha creado el consentimiento informado <strong>CORONA INDIVIDUAL</strong></p>
+				  <p class="evento-info">Dr.(a) ANA MARIA GUZMAN VIVANCO, #Número de identificación: 52417626, 16:40:19</p>
+				</div>
+			  </div>
+			</div>
+
+			  <!-- Evento 3: Documentos -->
+			<div class="timeline-item">
+			  <div class="timeline-date">sep. 24, 2025</div>
+			  <div class="timeline-marker"></div>
+			  <div class="timeline-content">
+				<div class="evento-header documento">
+				  <span>DOCUMENTO AGREGADO</span>
+				  <span class="icono">🖼️</span>
+				</div>
+				<div class="evento-body">
+				  <div class="documentos-grid">
+					<div class="documento-item">
+					  <div class="documento-preview"></div>
+					  <p>ALEJANDRA HERRERA BARRERA</p>
+					  <p class="documento-hora">11:16:52</p>
+					</div>
+					<div class="documento-item">
+					  <div class="documento-preview"></div>
+					  <p>ALEJANDRA HERRERA BARRERA</p>
+					  <p class="documento-hora">10:38:23</p>
+					</div>
+					<div class="documento-item">
+					  <div class="documento-preview"></div>
+					  <p>ALEJANDRA HERRERA BARRERA</p>
+					  <p class="documento-hora">10:38:13</p>
+					</div>
+				  </div>
+				</div>
+			  </div>
+			</div>
+
+			  <!-- Evento 4: Evolución -->
+			<div class="timeline-item">
+			  <div class="timeline-date">sep. 29, 2022</div>
+			  <div class="timeline-marker"></div>
+			  <div class="timeline-content">
+				<div class="evento-header evolucion">
+				  <span>EVOLUCIÓN GUARDADA</span>
+				  <span class="icono">🔄</span>
+				</div>
+				<div class="evento-body">
+				  <p><strong>Plan de tratamiento eliminado:</strong></p>
+				  <p>Acción realizada: Exodoncia de Dientes Permanentes Simple Pieza 2.6</p>
+				  <p>SE ANESTESIA Y SE REALIZA LA EXODONCIA DEL DIENTE</p>
+				  <div class="firmas-container">
+					<div class="firma">
+					  <span class="firma-check">✓</span>
+					  <span>Profesional: YESSIKA LARGO HERNANDEZ</span>
+					</div>
+					<div class="firma">
+					  <span class="firma-check">✓</span>
+					  <span>Paciente: Ana María Guzman Vivanco</span>
+					</div>
+				  </div>
+				  <p class="evento-info">Dr.(a) YESSIKA LARGO HERNANDEZ, #Número de identificación: 1053811550, 04:34:22</p>
+				</div>
+			  </div>
+			</div>
+
+			  <!-- Evento 5: Antecedente Médico -->
+			<div class="timeline-item">
+			  <div class="timeline-date">sep. 29, 2022</div>
+			  <div class="timeline-marker"></div>
+			  <div class="timeline-content">
+				<div class="evento-header antecedente">
+				  <span>ANTECEDENTE MÉDICO GUARDADO</span>
+				  <span class="icono">❤️</span>
+				</div>
+				<div class="evento-body">
+				  <p><strong>Motivo de consulta</strong></p>
+				  <p>PARA QUE ME ARREGLEN ESTA DIENTE</p>
+				  <p><strong>Enfermedad actual</strong></p>
+				  <p>DIENTE 21 PRESENTA DOLOR AL CONSUMIR ALIMENTO FRIOS HACE 2 DIAS</p>
+				  <p><strong>Antecedentes familiares</strong></p>
+				  <p>NO REFIE</p>
+				  <p class="evento-info">2:44:09</p>
+				</div>
+			  </div>
+			</div>
+
+			  <!-- Evento 6: Documento PDF -->
+			<div class="timeline-item">
+			  <div class="timeline-date">sep. 28, 2022</div>
+			  <div class="timeline-marker"></div>
+			  <div class="timeline-content">
+				<div class="evento-header documento">
+				  <span>DOCUMENTO AGREGADO</span>
+				  <span class="icono">🖼️</span>
+				</div>
+				<div class="evento-body">
+				  <div class="documento-pdf">
+					<div class="pdf-icon">PDF</div>
+					<p>YESSIKA LARGO HERNANDEZ</p>
+					<p class="documento-hora">23:41:07</p>
+				  </div>
+				</div>
+			  </div>
+			</div>
+
+			</div><!-- fin timeline-container -->
+		  </div><!-- fin historia-container -->
+		</div><!-- fin timeline-historia-clinica -->
+
+    <!-- ===== FORMULARIO ANAMNESIS ===== -->
+    <div id="anamnesis-form-container" class="anamnesis-form-container">
+      <div class="anamnesis-titulo">ANAMNESIS</div>
+
+      <form id="form-anamnesis">
+        <div class="anamnesis-campo">
+          <label class="anamnesis-label">MOTIVO DE CONSULTA: *</label>
+          <textarea id="anamnesis-motivo" class="anamnesis-textarea" placeholder="Ingresa el motivo de consulta" required></textarea>
+        </div>
+
+        <div class="anamnesis-campo">
+          <label class="anamnesis-label">ENFERMEDAD ACTUAL: *</label>
+          <textarea id="anamnesis-enfermedad" class="anamnesis-textarea" placeholder="Ingresa la enfermedad actual" required></textarea>
+        </div>
+
+        <div class="anamnesis-campo">
+          <label class="anamnesis-label2">ANTECEDENTES PERSONALES</label>
+        </div>
+
+        <div class="anamnesis-campo">
+          <label class="anamnesis-label">ANTECEDENTES PATOLOGICOS: *</label>
+          <textarea id="anamnesis-patologicos" class="anamnesis-textarea" placeholder="Ingresa los antecedentes patológicos" required></textarea>
+        </div>
+
+        <div class="anamnesis-campo">
+          <label class="anamnesis-label">ANTECEDENTES FARMACOLOGICOS: *</label>
+          <textarea id="anamnesis-farmacologicos" class="anamnesis-textarea" placeholder="Ingresa los antecedentes farmacológicos" required></textarea>
+        </div>
+
+        <div class="anamnesis-campo">
+          <label class="anamnesis-label">ANTECEDENTES ODONTOLOGICOS: *</label>
+          <textarea id="anamnesis-odontologicos" class="anamnesis-textarea" placeholder="Ingresa los antecedentes odontológicos" required></textarea>
+        </div>
+
+        <button type="button" id="btn-agregar-historia" class="btn-agregar-historia">
+          Agregar a la Historia clínica
+        </button>
+		<button type="button" id="btn-generar-alerta" class="btn-generar-alerta">
+			Generar Alerta
+		</button>
+      </form>
+    </div>
+
+    <!-- ===== FICHA ANAMNESIS (SOLO LECTURA) ===== -->
+    <div id="ficha-anamnesis-container" class="ficha-anamnesis-container">
+      <div id="ficha-anamnesis-content">
+        <div class="ficha-anamnesis-vacia">No hay registros de anamnesis disponibles</div>
+      </div>
+    </div>
+
+</section>
+
+	<section id="historia-section" style="display:none; padding:40px;">
+	  <h2>Historia Clínica</h2>
+	  <p>Pantalla en desarrollo...</p>
+	</section>
+</main>
+	<!-- Popup Modal -->
+	<div id="modal-overlay" class="modal-overlay" style="display: none;">
+	  <div class="modal-content">
+		<div class="modal-tabs">
+		  <button class="tab-btn active" data-tab="tab-paciente">Datos del Paciente</button>
+		  <button class="tab-btn" data-tab="tab-cita">Programación de la Cita</button>
+		</div>
+		<form id="appointment-form">
+		  <!-- Primer tab: Datos del paciente -->
+		  <div class="tab-section active" id="tab-paciente">
+			<label>Tipo de Identificación
+			  <select required>
+				<option value="">Seleccione uno</option>
+				<option value="CC">Cédula de ciudadanía</option>
+				<option value="TI">Tarjeta de identidad</option>
+				<option value="CE">Cédula de extranjería</option>
+				<option value="PA">Pasaporte</option>
+			  </select>
+			</label>
+			<label>Número de Identificación
+			  <input type="number" required min="1" step="1" pattern="\d+">
+			</label>
+			<label>Teléfono fijo
+			  <input type="text" maxlength="10" pattern="\d{10}">
+			</label>
+			<label>Teléfono celular
+			  <input type="text" maxlength="10" pattern="\d{10}" required>
+			</label>
+			<label>Dirección
+			  <textarea maxlength="255" required></textarea>
+			</label>
+			<label>Correo electrónico
+			  <input type="email" required>
+			</label>
+			<label>Lugar de Residencia
+			  <select required>
+				<option value="">Seleccione uno</option>
+				<option>Bogotá</option>
+				<option>Medellín</option>
+				<option>Cali</option>
+				<option>Manizales</option>
+				<option>Pereira</option>
+				<option>Cartagena</option>
+				<option>Santa Marta</option>
+				<option>Boyacá</option>
+			  </select>
+			</label>
+			<label>Fecha de nacimiento
+			  <input type="date" required>
+			</label>
+		  </div>
+		  <!-- Segundo tab: Programación de la cita -->
+		  <div class="tab-section" id="tab-cita">
+			<label>Fecha de programación
+			  <input type="date" id="fecha-programacion" required>
+			</label>
+			<label>Fecha solicitada por el paciente
+			  <input type="date" id="fecha-solicitada" readonly>
+			</label>
+			<label>Observación de la cita
+			  <textarea maxlength="255"></textarea>
+			</label>
+			<label>Motivo Cita
+			  <select required>
+				<option value="">Seleccione uno</option>
+				<option>Odontología General Consulta 1a Vez.</option>
+				<option>Odontología General Consulta de Control</option>
+				<option>Odontología General de Urgencias.</option>
+				<option>Odontología Pediátrica Consulta 1a Vez</option>
+				<option>Cirugía Oral Consulta 1a Vez</option>
+				<option>Consulta para Continuar Plan de TTO Activo</option>
+				<option>Educación Individual en Salud, por Higiene Oral</option>
+				<option>Endodoncia Consulta 1a Vez</option>
+			  </select>
+			</label>
+			<label>Hora recomendada
+			  <input type="time" min="07:00" max="17:00" step="900"> <!-- de 7am a 5pm, pasos de 15 min -->
+			</label>
+			<button type="button" id="confirmar-cita-btn" class="confirmar-cita-btn">Confirmar Cita</button>
+		  </div>
+		</form>
+	  </div>
+	</div>
+	<!-- Modal: Generar Alerta -->
+	<div id="modal-alerta" class="modal-overlay" style="display:none;">
+	<div class="modal-content modal-alerta-content">
+		<button class="modal-close-x" data-close="modal-alerta">×</button>
+		<h3 class="modal-title">Generar Alerta</h3>
+
+		<div class="modal-body">
+		<div class="alerta-radio-group">
+			<label class="alerta-radio">
+			<input type="radio" name="tipo-alerta" value="Administrativa">
+			Alerta Administrativa
+			</label>
+			<label class="alerta-radio">
+			<input type="radio" name="tipo-alerta" value="Médica">
+			Alerta médica
+			</label>
+		</div>
+
+		<label class="alerta-label">Registrar la alerta</label>
+		<textarea id="alerta-texto" class="alerta-textarea" rows="4" placeholder="Escribe la alerta..."></textarea>
+
+		<label class="alerta-label">Fecha y hora</label>
+		<input id="alerta-fecha-hora" class="alerta-fecha" type="text" readonly>
+		</div>
+
+		<div class="modal-footer">
+		<button type="button" id="btn-guardar-alerta" class="btn-principal">
+			Guardar Alerta
+		</button>
+		</div>
+	</div>
+	</div>
+
+<div id="toast" class="toast"></div>
+<!-- Popup de Confirmación con PDF -->
+<div id="modal-confirmacion-pdf" class="modal-overlay-pdf" style="display:none;">
+  <div class="modal-content-pdf">
+    <button id="btn-cerrar-pdf" class="btn-cerrar-pdf">×</button>
+    <div class="pdf-header">
+      <h3>Cita Confirmada</h3>
+      <button id="btn-descargar-pdf" class="btn-descargar-pdf">
+        <span style="font-size:24px;">📄</span> Descargar PDF
+      </button>
+    </div>
+    <div id="contenido-pdf-preview" class="pdf-preview">
+      <!-- Se llenará con JS -->
+    </div>
+  </div>
+</div>
+<!-- Popup A: Abrir Horario -->
+<div id="modal-abrir-horario" class="modal-overlay" style="display:none;">
+  <div class="modal-content-horario">
+    <button class="modal-close-x" data-close="modal-abrir-horario">×</button>
+    <h3 class="modal-title">Abrir Horario</h3>
+    <p class="modal-profesional" id="abrir-profesional"></p>
+    <div class="modal-body">
+      <ul class="lista-rangos-fijos">
+        <li>08:00 a. m. - 12:00 m</li>
+        <li>02:00 p. m. - 05:40 p. m.</li>
+      </ul>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-principal" data-close="modal-abrir-horario">
+        Cerrar Horario
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Popup M: Modificar Horario -->
+<div id="modal-modificar-horario" class="modal-overlay" style="display:none;">
+  <div class="modal-content-horario">
+    <button class="modal-close-x" data-close="modal-modificar-horario">×</button>
+    <h3 class="modal-title">Modificar Horario</h3>
+    <p class="modal-profesional" id="modificar-profesional"></p>
+    <div class="modal-body">
+      <div class="rango-inputs">
+        <div>
+          <label>Hora desde
+            <input type="time" id="modificar-desde" step="900">
+          </label>
+        </div>
+        <div>
+          <label>Hora hasta
+            <input type="time" id="modificar-hasta" step="900">
+          </label>
+        </div>
+        <button type="button" id="btn-agregar-modificar" class="btn-pequeño">Agregar rango</button>
+      </div>
+      <div class="rango-lista-container">
+        <div id="lista-modificar-rangos" class="rango-lista"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-principal" data-close="modal-modificar-horario">
+        Modificar Horario
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Popup B: Bloquear Rango -->
+<div id="modal-bloquear-rango" class="modal-overlay" style="display:none;">
+  <div class="modal-content-horario">
+    <button class="modal-close-x" data-close="modal-bloquear-rango">×</button>
+    <h3 class="modal-title">Bloquear Rango</h3>
+    <p class="modal-profesional" id="bloquear-profesional"></p>
+    <div class="modal-body">
+      <div class="rango-inputs">
+        <div>
+          <label>Hora desde
+            <input type="time" id="bloquear-desde" step="900">
+          </label>
+        </div>
+        <div>
+          <label>Hora hasta
+            <input type="time" id="bloquear-hasta" step="900">
+          </label>
+        </div>
+        <button type="button" id="btn-agregar-bloquear" class="btn-pequeño">Agregar rango</button>
+      </div>
+      <div class="rango-lista-container">
+        <div id="lista-bloquear-rangos" class="rango-lista"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-principal" data-close="modal-bloquear-rango">
+        Bloquear Rango
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+	document.querySelector('.btn-descargar-excel').addEventListener('click', function() {
+      var tabla = document.querySelector('.agenda-diaria-tabla');
+      var nombreArchivo = 'agenda_diaria_' + new Date().toISOString().slice(0, 10) + '.xlsx';
+      var datos = [];
+      var filas = tabla.querySelectorAll('tr');
+      filas.forEach(function(fila) {
+        var filaDatos = [];
+        var celdas = fila.querySelectorAll('th, td');
+        celdas.forEach(function(celda) {
+          filaDatos.push(celda.textContent.trim());
+        });
+        datos.push(filaDatos);
+      });
+      var libro = XLSX.utils.book_new();
+      var hoja = XLSX.utils.aoa_to_sheet(datos);
+      XLSX.utils.book_append_sheet(libro, hoja, 'Agenda Diaria');
+      XLSX.writeFile(libro, nombreArchivo);
+    });
+	document.querySelector('.btn2-descargar-excel').addEventListener('click', function() {
+      var tabla = document.querySelector('.agenda-semanal-tabla');
+      var nombreArchivo = 'agenda_semanal_' + new Date().toISOString().slice(0, 10) + '.xlsx';
+      var datos = [];
+      var filas = tabla.querySelectorAll('tr');
+      filas.forEach(function(fila) {
+        var filaDatos = [];
+        var celdas = fila.querySelectorAll('th, td');
+        celdas.forEach(function(celda) {
+          filaDatos.push(celda.textContent.trim());
+        });
+        datos.push(filaDatos);
+      });
+      var libro = XLSX.utils.book_new();
+      var hoja = XLSX.utils.aoa_to_sheet(datos);
+      XLSX.utils.book_append_sheet(libro, hoja, 'Agenda Semanal');
+      XLSX.writeFile(libro, nombreArchivo);
+    });
+	document.querySelector('.btn3-descargar-excel').addEventListener('click', function() {
+	  var tabla = document.querySelector('.informes-tabla');
+	  var nombreArchivo = 'reporte_trimestral_' + new Date().toISOString().slice(0, 10) + '.xlsx';
+	  var datos = [];
+	  var filas = tabla.querySelectorAll('tr');
+	  filas.forEach(function(fila) {
+		var filaDatos = [];
+		var celdas = fila.querySelectorAll('th, td');
+		celdas.forEach(function(celda) {
+		  filaDatos.push(celda.textContent.trim());
+		});
+		datos.push(filaDatos);
+	  });
+	  var libro = XLSX.utils.book_new();
+	  var hoja = XLSX.utils.aoa_to_sheet(datos);
+	  XLSX.utils.book_append_sheet(libro, hoja, 'Reporte Trimestral');
+	  XLSX.writeFile(libro, nombreArchivo);
+	});
+  // Rellenar años desde 2010 hasta actual
+  const yearSelect = document.getElementById('year-select');
+  const currentYear = new Date().getFullYear();
+  for(let y=2010; y<=currentYear; y++) {
+    const opt = document.createElement('option');
+    opt.value = y;
+    opt.textContent = y;
+    yearSelect.appendChild(opt);
+  }
+  yearSelect.value = currentYear;
+
+  const monthNames = [
+    "Enero", "Febrero", "Marzo", "Abril",
+    "Mayo", "Junio", "Julio", "Agosto",
+    "Septiembre", "Octubre", "Noviembre", "Diciembre"
+  ];
+  const professionals = [
+    "DR RAMON ACEVEDO 1143373795",
+    "DRA MACIEL VALENCIA 30238388",
+    "DRA ANNY HENRIQUEZ 53106343",
+    "DRA SANDY VITOLA 1143447511",
+    "DRA MILENA MORA 52427920",
+    "DRA JULIANA MENDOZA 1018505450",
+    "DRA ELIANA ORTEGON  1053811550",
+    "DR DIEGO BECERRA RAMON 1143373795"
+  ];
+  const profesionalCitaSel = document.getElementById('profesional-cita');
+	if (profesionalCitaSel) {
+	professionals.forEach(p => {
+		const opt = document.createElement('option');
+		opt.value = p;
+		opt.textContent = p;
+		profesionalCitaSel.appendChild(opt);
+	});
+	}
+
+  // Obtener festivos ocultos (día y mes)
+  function getHolidays() {
+    const hiddenHolidays = document.querySelectorAll('#hidden-holidays > div');
+    let holidays = [];
+    hiddenHolidays.forEach(div => {
+      holidays.push({day: +div.dataset.day, month: +div.dataset.month});
+    });
+    return holidays;
+  }
+
+  // Verificar si es festivo o domingo
+  function isHolidayOrSunday(date, holidays) {
+    if (date.getDay() === 0) return true; // domingo
+    for (const h of holidays) {
+      if (date.getDate() === h.day && (date.getMonth()+1) === h.month) return true;
+    }
+    return false;
+  }
+
+  // Generar un calendario para un profesional, mes y año dados
+	function generateCalendar(year, month, professional) {
+		const holidays = getHolidays();
+		const firstDay = new Date(year, month, 1);
+		const lastDay = new Date(year, month+1, 0);
+		const daysInMonth = lastDay.getDate();
+
+		let html = `<div class="calendar"><h3>${professional}</h3><table><thead><tr>`;
+		const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+		for (const day of dayNames) {
+			html += `<th>${day}</th>`;
+		}
+		html += `</tr></thead><tbody>`;
+
+		let startDay = firstDay.getDay();
+
+		// Primera fila de la tabla
+		html += '<tr>';
+		for(let i=0; i<startDay; i++) {
+			html += `<td></td>`;
+		}
+
+		for(let d=1; d<=daysInMonth; d++) {
+			const date = new Date(year, month, d);
+			let isRed = isHolidayOrSunday(date, holidays);
+
+			if(!isRed){
+				html += `<td>
+					<div class="time-header">AM PM</div>
+					<div class="day-num">${d}</div>
+					<div class="badge-row">
+					<span class="badge badge-a">A</span>
+					<span class="badge badge-m">M</span>
+					<span class="badge badge-b">B</span>
+					</div>
+				</td>`;
+			} else {
+				html += `<td class="red-bg">${d}</td>`;
+			}
+
+			// Si termina la semana, cerramos y abrimos una fila nueva (excepto en el último día)
+			if ((startDay + d) % 7 === 0 && d !== daysInMonth) {
+				html += '</tr><tr>';
+			}
+		}
+
+		// Rellenar celdas vacías al final si la última semana no está completa
+		let totalCeldas = startDay + daysInMonth;
+		if (totalCeldas % 7 !== 0) {
+			let emptyTd = 7 - (totalCeldas % 7);
+			for(let i=0; i<emptyTd; i++) html += '<td></td>';
+		}
+		html += '</tr></tbody></table></div>';
+		return html;
+	}
+
+  // Renderizar calendarios según selección
+  function renderCalendars() {
+    const year = parseInt(yearSelect.value);
+    const month = monthNames.indexOf(document.getElementById('month-select').value);
+    const profSel = document.getElementById('professional-select').value;
+    const container = document.getElementById('calendars-container');
+
+    container.innerHTML = '';
+
+    if (profSel === 'Todos') {
+      for (const prof of professionals) {
+        container.innerHTML += generateCalendar(year, month, prof);
+      }
+    } else {
+      container.innerHTML = generateCalendar(year, month, profSel);
+    }
+  }
+
+  yearSelect.addEventListener('change', renderCalendars);
+  document.getElementById('month-select').addEventListener('change', renderCalendars);
+  document.getElementById('professional-select').addEventListener('change', renderCalendars);
+
+  renderCalendars();
+	// ===== Mapeo de botones -> secciones =====
+	const sections = {
+	  menu0: document.getElementById('agendamiento-section'),
+	  menu1: document.getElementById('control-agendas-section'),
+	  menu2: document.getElementById('agenda-diaria-section'),
+	  menu3: document.getElementById('agenda-semanal-section'),
+	  "btn-crear-disponibilidad": document.getElementById('crear-disponibilidad-section'),
+	  menu4: document.getElementById('informes-section'),
+	  menu5: document.getElementById('historia-section'),
+	  "menu-pacientes": document.getElementById('config-section'),
+	  "menu-config": document.getElementById('config-section'),
+	};
+
+	  // Navegación simple de menú (solo activar la sección Control de Agendas)
+	 // Menú PRINCIPAL solamente (#nav-main)
+	const menuButtonsPrincipal = document.querySelectorAll('#nav-main button');
+	menuButtonsPrincipal.forEach(btn => {
+	  btn.addEventListener('click', () => {
+		menuButtonsPrincipal.forEach(b => b.classList.remove('active'));
+		btn.classList.add('active');
+		Object.values(sections).forEach(sec => sec.style.display = 'none');
+		if (sections[btn.id]) sections[btn.id].style.display = 'block';
+		
+		// Especial: Configuración
+		if (btn.id === 'menu-config') {
+		  activarMenuConfiguracion();
+		}
+	  });
+	});
+
+	// Submenú CONFIG (handler separado)
+	document.addEventListener('click', (e) => {
+	  if (e.target.closest('#nav-config')) {
+		document.querySelectorAll('#nav-config .config-btn').forEach(b => b.classList.remove('active'));
+		e.target.closest('.config-btn')?.classList.add('active');
+		
+		if (e.target.id === 'menu-pacientes' || e.target.closest('#menu-pacientes')) {
+		  document.getElementById('config-panel').style.display = 'block';
+		}
+	  }
+	});
+
+  	// Deja visible solo Agendamiento al cargar
+	Object.values(sections).forEach(sec => sec.style.display = 'none');
+	sections['menu0'].style.display = 'block';
+	// Cambiar entre TABS
+	document.querySelectorAll('.tab-btn').forEach(btn => {
+	  btn.addEventListener('click', function() {
+		document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+		this.classList.add('active');
+		document.querySelectorAll('.tab-section').forEach(tab => tab.classList.remove('active'));
+		document.getElementById(this.dataset.tab).classList.add('active');
+	  });
+	});
+	function mostrarSolo(id) {
+	  Object.values(sections).forEach(sec => {
+		if (sec && sec.style) sec.style.display = 'none';
+	  });
+	  const s = sections[id];
+	  if (s && s.style) s.style.display = 'block';
+	}
+	function activarMenuConfiguracion() {
+	  document.getElementById('nav-main').style.display = 'none';
+	  document.getElementById('nav-config').style.display = 'flex';
+
+	  // Oculta todas las secciones
+	  Object.values(sections).forEach(sec => sec && (sec.style.display = 'none'));
+
+	  // Muestra la sección de configuración
+	  sections["menu-config"].style.display = 'block';
+
+	  // (Opcional) muestra por defecto el panel de pacientes
+	  document.getElementById('config-panel').style.display = 'block';
+	}
+
+
+	// click del botón Configuración
+	document.getElementById('menu-config')?.addEventListener('click', () => {
+	  activarMenuConfiguracion();
+	});
+	// click del botón Pacientes
+	document.getElementById('menu-pacientes')?.addEventListener('click', () => {
+		//activarMenuConfiguracion();
+		mostrarPantallaPacientes();
+		// Mostrar el panel de pacientes
+		document.getElementById('config-panel').style.display = 'block';
+	});
+	// botón Regresar
+	document.getElementById('btn-config-regresar').addEventListener('click', () => {
+	  document.getElementById('nav-config').style.display = 'none';
+	  document.getElementById('nav-main').style.display = 'flex';
+	  document.getElementById('menu0').classList.add('active'); // Vuelve a Agendamiento
+	});
+	// para usar desde la búsqueda
+	function mostrarPantallaPacientes() {
+	  document.getElementById('nav-main').style.display = 'flex';
+	  document.getElementById('nav-config').style.display = 'none';
+
+	  // Oculta todas las secciones
+	  Object.values(sections).forEach(sec => sec && (sec.style.display = 'none'));
+
+	  // Muestra la sección de configuración
+	  sections["menu-config"].style.display = 'block';
+
+	  // (Opcional) muestra por defecto el panel de pacientes
+	  document.getElementById('config-panel').style.display = 'block';
+		// marcar “Pacientes” como activo dentro del menú de configuración
+	  document.getElementById('menu-pacientes')?.classList.add('active');
+	  
+	  // si más adelante hay otros paneles, aquí mostrarías solo el de pacientes
+	}
+
+	// Sincroniza la fecha de programación con la solicitada
+	document.getElementById('fecha-programacion').addEventListener('change', function() {
+	  document.getElementById('fecha-solicitada').value = this.value;
+	});
+	// Función para mostrar el popup de confirmación y generar PDF
+	const btnConfirmarPopup = document.getElementById('confirmar-cita-btn');
+	if (btnConfirmarPopup) {
+	btnConfirmarPopup.addEventListener('click', function (e) {
+		e.preventDefault();
+		// aquí puedes decidir si también quieres generar el PDF
+		// o solo cerrar el popup / guardar en base de datos
+		// mostrarPopupConfirmacionPDF(datosConfirmacionDesdePopup);
+		document.getElementById('modal-overlay').style.display = 'none';
+	});
+	}
+
+	// Manejar el envío del formulario principal de agendamiento
+	const formMain = document.getElementById('appointment-form-main');
+	if (formMain) {
+	formMain.addEventListener('submit', function (e) {
+		e.preventDefault();
+
+		// si el form no es válido, deja que el navegador marque los campos
+		if (!formMain.checkValidity()) {
+			formMain.reportValidity();
+		return;
+		}
+		// Capturar datos para el PDF desde el formulario principal
+		// Capturar datos para el PDF desde el formulario principal
+		const nombrePaciente = document.getElementById('nombre-paciente')?.value || 'Paciente';
+		const numeroId       = document.getElementById('numero-identificacion')?.value || '';
+		const fechaProgramacion = document.getElementById('fecha-programacion-main')?.value || '';
+		const horaRecomendada   = document.getElementById('hora-recomendada')?.value || '';
+		const profesional       = document.getElementById('profesional-cita')?.value || '';
+		const tipoServicio      = document.getElementById('tipo-servicio')?.value || '';
+
+		function toAmPm(time) {
+		if (!time) return 'N/A';
+		const [h, m] = time.split(':');
+		let hh = parseInt(h, 10);
+		const suf = hh >= 12 ? 'p. m.' : 'a. m.';
+		if (hh === 0) hh = 12;
+		else if (hh > 12) hh -= 12;
+		return `${hh}:${m} ${suf}`;
+		}
+
+		const datosConfirmacion = {
+		nombrePaciente,
+		docPaciente: numeroId,
+		fechaProgramacion,
+		horaRecomendada: toAmPm(horaRecomendada),
+		profesional,
+		tipoServicio
+		};
+
+		mostrarPopupConfirmacionPDF(datosConfirmacion);
+	});
+	}
+
+	
+	const pacientes = [
+	  "HELEN MELISA LEON CAJAR",
+	  "YAFET ANTONIO DIAZ MUÑOZ",
+	  "LUCIA ALFONSO GOMEZ",
+	  "NELSON ARMANDO RODRIGUEZ",
+	  "ROSE CLEMENTINE",
+	  "OSCAR DAVID MARTINEZ",
+	  "MARITZA MARIA LOPEZ"
+	];
+	const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+	const horarios = [];
+	for(let h=6, m=20; h<19 || (h===18 && m<=40); ) {
+	  horarios.push({h, m});
+	  m += 20;
+	  if(m >= 60){ h++; m=0; }
+	}
+
+	// Limpia la tabla
+	const tbody = document.querySelector('.agenda-semanal-tabla tbody');
+	tbody.innerHTML = '';
+
+	// Crear la matriz de pacientes asignados vacía
+	const agenda = Array.from({length: horarios.length}, () => Array(6).fill(''));
+
+	// Asignar aleatoriamente cada paciente a una celda de día/hora
+	pacientes.forEach(nombre => {
+	  let asignado = false;
+	  while(!asignado) {
+		const fila = Math.floor(Math.random() * horarios.length);
+		const col = Math.floor(Math.random() * 6);
+		if(agenda[fila][col] === '') {
+		  agenda[fila][col] = nombre;
+		  asignado = true;
+		}
+	  }
+	});
+
+	// Renderizar la tabla completa con pacientes asignados
+	horarios.forEach((horario, i) => {
+	  let hora = `${horario.h > 12 ? horario.h-12 : horario.h}:${horario.m.toString().padStart(2,'0')} ${horario.h >= 12 ? 'p. m.' : 'a. m.'}`;
+	  let fila = `<tr><td>${hora}</td>`;
+	  for(let dia=0; dia<6; dia++) {
+		fila += `<td>${agenda[i][dia]}</td>`;
+	  }
+	  fila += '</tr>';
+	  tbody.insertAdjacentHTML('beforeend', fila);
+	});
+	// Tabs del formulario principal de agendamiento
+	document.querySelectorAll('.modal-content-inline .tab-btn').forEach(btn => {
+		btn.addEventListener('click', function() {
+			const container = this.closest('.modal-content-inline');
+			container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+			this.classList.add('active');
+			container.querySelectorAll('.tab-section').forEach(tab => tab.classList.remove('active'));
+			container.querySelector('#' + this.dataset.tab).classList.add('active');
+		});
+	});
+
+	// Copiar fecha programación -> solicitada (pantalla principal)
+	const fpMain = document.getElementById('fecha-programacion-main');
+	const fsMain = document.getElementById('fecha-solicitada-main');
+	if (fpMain && fsMain) {
+		fpMain.addEventListener('change', function() {
+			fsMain.value = this.value;
+		});
+	}
+
+	// Cuando se selecciona un profesional, mostrar tabla
+	const dispoProfSelect = document.getElementById('dispo-profesional-select');
+	const dispoTablaContainer = document.getElementById('dispo-tabla-container');
+
+	if (dispoProfSelect && dispoTablaContainer) {
+	dispoProfSelect.addEventListener('change', () => {
+		if (dispoProfSelect.value) {
+		dispoTablaContainer.style.display = 'block';
+		} else {
+		dispoTablaContainer.style.display = 'none';
+		}
+		// Limpiar rangos al cambiar profesional
+		document.querySelectorAll('.dispo-celda-rangos').forEach(c => c.innerHTML = '');
+	});
+	}
+
+// Utilidad toast
+function showToast(msg, type = '') {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = msg;
+  toast.className = 'toast' + (type ? ' ' + type : '');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2600);
+}
+
+// Convertir hh:mm a texto am/pm
+function toAmPm(v) {
+  const [hStr, mStr] = v.split(':');
+  let h = parseInt(hStr, 10);
+  const suf = h >= 12 ? 'p. m.' : 'a. m.';
+  if (h === 0) h = 12;
+  else if (h > 12) h -= 12;
+  return `${h}:${mStr} ${suf}`;
+}
+
+	// Agregar rangos en la fila 2 con validación y X
+	document.querySelectorAll('.btn-agregar-rango').forEach(btn => {
+		btn.addEventListener('click', function () {
+			const contDia = this.closest('.dispo-control-dia');
+			const diaIndex = contDia.dataset.dia;
+			const desdeInput = contDia.querySelector('.hora-desde');
+			const hastaInput = contDia.querySelector('.hora-hasta');
+
+			if (!desdeInput.value || !hastaInput.value) {
+			showToast('Debe seleccionar hora desde y hasta.', 'error');
+			return;
+			}
+
+			const rangoTexto = `${toAmPm(desdeInput.value)} - ${toAmPm(hastaInput.value)}`;
+			const celda = document.querySelector(`.dispo-celda-rangos[data-dia="${diaIndex}"]`);
+
+			// Validar duplicado en ese día
+			const existentes = Array.from(celda.querySelectorAll('.dispo-rango-texto'))
+			.map(span => span.textContent.trim());
+			if (existentes.includes(rangoTexto)) {
+			showToast('Este rango ya existe para ese día.', 'error');
+			return;
+			}
+
+			// Crear item con texto + X
+			const item = document.createElement('div');
+			item.className = 'dispo-rango-item';
+
+			const spanTexto = document.createElement('span');
+			spanTexto.className = 'dispo-rango-texto';
+			spanTexto.textContent = rangoTexto;
+
+			const spanX = document.createElement('span');
+			spanX.className = 'dispo-rango-x';
+			spanX.textContent = '×';
+
+			// Quitar rango al hacer clic en X
+			spanX.addEventListener('click', () => {
+			item.remove();  // al eliminar el div, los demás suben y no queda hueco
+			});
+
+			item.appendChild(spanTexto);
+			item.appendChild(spanX);
+			celda.appendChild(item);
+
+			showToast('Rango agregado correctamente.');
+		});
+	});
+
+
+	// Guardar disponibilidad: volver a sólo lista de profesionales
+	const btnGuardarDispo = document.getElementById('btn-guardar-disponibilidad');
+	if (btnGuardarDispo) {
+	btnGuardarDispo.addEventListener('click', () => {
+		// Aquí podrías enviar datos al servidor si lo necesitas
+		dispoTablaContainer.style.display = 'none';
+		dispoProfSelect.value = '';
+		document.querySelectorAll('.dispo-celda-rangos').forEach(c => c.innerHTML = '');
+	});
+	}
+	const tipoServicioSel = document.getElementById('tipo-servicio');
+	const chk6Meses = document.getElementById('chk-6meses');
+	const grupoTipoPbs = document.getElementById('grupo-tipo-pbs');
+	const motivoCitaSel = document.getElementById('motivo-cita');
+
+	function llenarMotivosPBS(checkMarcado) {
+	motivoCitaSel.innerHTML = '<option value="">Seleccione uno</option>';
+	if (checkMarcado) {
+		// PBS + checkbox -> solo Odontología General
+		motivoCitaSel.insertAdjacentHTML('beforeend',
+		'<option value="OG">Odontología General</option>');
+	} else {
+		// PBS sin checkbox
+		const opciones = [
+		{v:'HO', t:'Higiene Oral'},
+		{v:'OG', t:'Odontología General'},
+		{v:'CO', t:'Cirugía Oral'},
+		{v:'PED', t:'Pediatría'},
+		{v:'PPBS', t:'Prótesis PBS'}
+		];
+		opciones.forEach(o => {
+		motivoCitaSel.insertAdjacentHTML('beforeend',
+			`<option value="${o.v}">${o.t}</option>`);
+		});
+	}
+	}
+
+	function llenarMotivosParticular(checkMarcado) {
+	motivoCitaSel.innerHTML = '<option value="">Seleccione uno</option>';
+	if (checkMarcado) {
+		// Particular + checkbox -> solo Odontología General
+		motivoCitaSel.insertAdjacentHTML('beforeend',
+		'<option value="OG">Odontología General</option>');
+	} else {
+		const opciones = [
+		{v:'OG', t:'Odontología General'},
+		{v:'RO', t:'Rehabilitación Oral'},
+		{v:'EN', t:'Endodoncia'},
+		{v:'CO', t:'Cirugía Oral'},
+		{v:'PED', t:'Pediatría'},
+		{v:'IMP', t:'Implante'},
+		{v:'ORTO', t:'Ortodoncia'},
+		{v:'PER', t:'Periodoncia'}
+		];
+		opciones.forEach(o => {
+		motivoCitaSel.insertAdjacentHTML('beforeend',
+			`<option value="${o.v}">${o.t}</option>`);
+		});
+	}
+	}
+
+	function refrescarMotivos() {
+		const tipo = tipoServicioSel.value;
+		const marcado = chk6Meses.checked;
+
+		if (tipo === 'PBS') {
+			grupoTipoPbs.style.display = '';
+			llenarMotivosPBS(marcado);
+		} else if (tipo === 'PARTICULAR') {
+			grupoTipoPbs.style.display = 'none';   // se oculta Tipo de PBS
+			llenarMotivosParticular(marcado);
+		} else {
+			grupoTipoPbs.style.display = 'none';
+			motivoCitaSel.innerHTML = '<option value="">Seleccione uno</option>';
+		}
+	}
+
+	// Eventos
+	if (tipoServicioSel && chk6Meses && motivoCitaSel) {
+		tipoServicioSel.addEventListener('change', () => {
+			refrescarMotivos();
+		});
+		chk6Meses.addEventListener('change', () => {
+			// no se esconde el checkbox en ningún caso; solo cambia motivos
+			refrescarMotivos();
+		});
+	}
+
+	// Variables globales para la cita
+	let datosConfirmacionCita = {};
+
+	// Función para mostrar popup y generar PDF
+	function mostrarPopupConfirmacionPDF(datosFormulario) {
+	datosConfirmacionCita = datosFormulario;
+	
+	const modalPDF = document.getElementById('modal-confirmacion-pdf');
+	const contenidoPreview = document.getElementById('contenido-pdf-preview');
+	
+	// Generar HTML del PDF
+	let htmlPDF = `
+		<div class="pdf-preview-content">
+		<div class="pdf-logos">
+			<img src="logo-sanitas.png" class="pdf-logo-left" alt="GOI">
+			${datosFormulario.tipoServicio === 'PBS' ? '<img src="logo_goi.jpg" class="pdf-logo-right" alt="Sanitas">' : '<div style="width:80px;"></div>'}
+		</div>
+		
+		<div class="pdf-titulo">CONFIRMACIÓN CITA</div>
+		
+		<div class="pdf-linea"><strong>NOMBRE DEL PACIENTE:</strong> ${datosFormulario.nombrePaciente || 'N/A'}</div>
+		<div class="pdf-linea"><strong>DOC DE IDENTIDAD:</strong> ${datosFormulario.docPaciente || 'N/A'}</div>
+		<div class="pdf-linea"><strong>FECHA:</strong> ${datosFormulario.fechaProgramacion || 'N/A'}</div>
+		<div class="pdf-linea"><strong>HORA:</strong> ${datosFormulario.horaRecomendada || 'N/A'}</div>
+		<div class="pdf-linea"><strong>PROFESIONAL:</strong> ${datosFormulario.profesional || 'N/A'}</div>
+		
+		<br/><br/>
+		
+		<div class="pdf-separator"></div>
+		
+		<div class="pdf-linea" style="text-align:left; font-weight:bold;">DIRECCIÓN: CR 54 # 152A - 85 3er piso Barrio Mazuren</div>
+		
+		<br/><br/>
+		
+		<div class="pdf-mensaje">
+			<strong>MENSAJE:</strong> Si no puede asistir, por favor cancele para darle oportunidad a otro paciente y no le genere multa por $14.000<br/>
+			<strong>WS:</strong> 3144056425
+		</div>
+		</div>
+	`;
+	
+	contenidoPreview.innerHTML = htmlPDF;
+	modalPDF.style.display = 'flex';
+	}
+
+	// Botón para cerrar popup
+	document.getElementById('btn-cerrar-pdf').addEventListener('click', function() {
+	document.getElementById('modal-confirmacion-pdf').style.display = 'none';
+	});
+
+	// Botón para descargar PDF
+	document.getElementById('btn-descargar-pdf').addEventListener('click', function() {
+	const elemento = document.getElementById('contenido-pdf-preview');
+	const opt = {
+		margin: 10,
+		filename: 'confirmacion-cita.pdf',
+		image: { type: 'jpeg', quality: 0.98 },
+		html2canvas: { scale: 2 },
+		jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+	};
+	html2pdf().set(opt).from(elemento).save();
+	});
+	// =========================
+	// Utilidades comunes
+	// =========================
+
+	// Obtener nombre del profesional desde el calendario:
+	// se asume que el título está en un <h3> dentro del .calendar padre.
+	function obtenerProfesionalDesdeBadge(badgeEl) {
+	const calendar = badgeEl.closest('.calendar');
+	if (!calendar) return '';
+	const h3 = calendar.querySelector('h3');
+	return h3 ? h3.textContent.trim() : '';
+	}
+
+	// Formatear hh:mm a formato 12h
+	function toAmPm(time) {
+	if (!time) return '';
+	const [h, m] = time.split(':');
+	let hh = parseInt(h, 10);
+	const suf = hh >= 12 ? 'p. m.' : 'a. m.';
+	if (hh === 0) hh = 12;
+	else if (hh > 12) hh -= 12;
+	return `${hh}:${m} ${suf}`;
+	}
+
+	// Abrir/cerrar modales por id
+	function abrirModal(id) {
+	const m = document.getElementById(id);
+	if (m) m.style.display = 'flex';
+	}
+	function cerrarModal(id) {
+	const m = document.getElementById(id);
+	if (m) m.style.display = 'none';
+	}
+
+	// Cerrar al hacer clic en botones con data-close
+	document.addEventListener('click', function(e) {
+	const closeId = e.target.getAttribute('data-close');
+	if (closeId) {
+		cerrarModal(closeId);
+	}
+	});
+
+	// =========================
+	// Popup A: Abrir Horario
+	// =========================
+
+	document.addEventListener('click', function(e) {
+	if (e.target.classList.contains('badge-a')) {
+		const profesional = obtenerProfesionalDesdeBadge(e.target);
+		const lbl = document.getElementById('abrir-profesional');
+		if (lbl) lbl.textContent = profesional;
+		abrirModal('modal-abrir-horario');
+	}
+	});
+
+	// =========================
+	// Lógica genérica para M y B (rango editable)
+	// =========================
+
+	function configurarPopupRangos(
+	tipo, // 'modificar' o 'bloquear'
+	inputDesdeId,
+	inputHastaId,
+	listaId,
+	botonAgregarId
+	) {
+	const inputDesde = document.getElementById(inputDesdeId);
+	const inputHasta = document.getElementById(inputHastaId);
+	const contLista = document.getElementById(listaId);
+	const btnAgregar = document.getElementById(botonAgregarId);
+
+	if (!inputDesde || !inputHasta || !contLista || !btnAgregar) return;
+
+	// Limpia la lista cuando se abre el modal correspondiente
+	function limpiarLista() {
+		contLista.innerHTML = '';
+	}
+
+	// Exponer limpieza para usarla al abrir
+	if (!window._limpiadoresPopup) window._limpiadoresPopup = {};
+	window._limpiadoresPopup[tipo] = limpiarLista;
+
+	btnAgregar.addEventListener('click', function() {
+		const desde = inputDesde.value;
+		const hasta = inputHasta.value;
+
+		if (!desde || !hasta) {
+		showToast('Debe escoger hora desde y hasta.', 'error');
+		return;
+		}
+
+		const rango = `${toAmPm(desde)} - ${toAmPm(hasta)}`;
+
+		// Validar duplicados
+		const existentes = Array.from(contLista.querySelectorAll('.rango-texto'))
+		.map(el => el.textContent.trim());
+		if (existentes.includes(rango)) {
+		showToast('Este rango ya existe.', 'error');
+		return;
+		}
+
+		const item = document.createElement('div');
+		item.className = 'rango-item';
+
+		const spanTexto = document.createElement('span');
+		spanTexto.className = 'rango-texto';
+		spanTexto.textContent = rango;
+
+		const spanX = document.createElement('span');
+		spanX.className = 'rango-x';
+		spanX.textContent = '×';
+		spanX.addEventListener('click', () => item.remove());
+
+		item.appendChild(spanTexto);
+		item.appendChild(spanX);
+		contLista.appendChild(item);
+	});
+	}
+
+	// Configurar popups de Modificar y Bloquear
+	configurarPopupRangos(
+	'modificar',
+	'modificar-desde',
+	'modificar-hasta',
+	'lista-modificar-rangos',
+	'btn-agregar-modificar'
+	);
+	configurarPopupRangos(
+	'bloquear',
+	'bloquear-desde',
+	'bloquear-hasta',
+	'lista-bloquear-rangos',
+	'btn-agregar-bloquear'
+	);
+
+	// =========================
+	// Abrir M y B con nombre profesional
+	// =========================
+
+	document.addEventListener('click', function(e) {
+	// M
+	if (e.target.classList.contains('badge-m')) {
+		const profesional = obtenerProfesionalDesdeBadge(e.target);
+		const lbl = document.getElementById('modificar-profesional');
+		if (lbl) lbl.textContent = profesional;
+
+		if (window._limpiadoresPopup && window._limpiadoresPopup['modificar']) {
+		window._limpiadoresPopup['modificar']();
+		}
+		abrirModal('modal-modificar-horario');
+	}
+
+	// B
+	if (e.target.classList.contains('badge-b')) {
+		const profesional = obtenerProfesionalDesdeBadge(e.target);
+		const lbl = document.getElementById('bloquear-profesional');
+		if (lbl) lbl.textContent = profesional;
+
+		if (window._limpiadoresPopup && window._limpiadoresPopup['bloquear']) {
+		window._limpiadoresPopup['bloquear']();
+		}
+		abrirModal('modal-bloquear-rango');
+	}
+	});
+	// Función para pintar badges en celdas tras A/M/B
+	function pintarBadge(celda, tipo) {
+	celda.innerHTML += `<span class="badge-${tipo}">${tipo}</span>`;
+	celda.classList.add(`has-${tipo.toLowerCase()}`);
+	}
+    document.addEventListener('DOMContentLoaded', () => {
+        const cedulaInput = document.getElementById('numero-identificacion');
+        const nombreInput = document.getElementById('nombre-paciente');
+        const celInput = document.getElementById('telefono-celular');
+        const dirInput = document.getElementById('direccion');
+        const mailInput = document.getElementById('correo-electronico');
+        const lugarSelect = document.getElementById('lugar-residencia');
+        const fechaNacInput = document.getElementById('fecha-nacimiento');
+
+        function autocompletarPaciente() {
+            const cedula = cedulaInput.value.trim();
+            if (cedula === '79714835') {
+                nombreInput.value = 'NELSON ARMANDO RODRIGUEZ AREVALO';
+                celInput.value = '3025254441';
+                dirInput.value = 'Calle 187 # 35-25 Apto 503';
+                mailInput.value = 'nelsonarmandorodri@outlook.com';
+                lugarSelect.value = 'Boyacá';
+                fechaNacInput.value = '1975-09-24';   // formato para <input type="date">
+            } else {
+                nombreInput.value = '';
+                celInput.value = '';
+                dirInput.value = '';
+                mailInput.value = '';
+                lugarSelect.value = '';
+                fechaNacInput.value = '';
+            }
+        }
+
+        cedulaInput.addEventListener('change', autocompletarPaciente);
+        cedulaInput.addEventListener('blur', autocompletarPaciente);
+    });
+	const tipoIdentSel = document.getElementById('tipo-identificacion');
+	const bloqueAcomp = document.getElementById('bloque-acompanante');
+
+	if (tipoIdentSel && bloqueAcomp) {
+	  tipoIdentSel.addEventListener('change', () => {
+		if (tipoIdentSel.value === 'TI') {
+		  bloqueAcomp.style.display = 'block';
+		} else {
+		  bloqueAcomp.style.display = 'none';
+		  // limpiar campos acompañante
+		  document.getElementById('tipo-doc-acompanante').value = '';
+		  document.getElementById('nombre-acompanante').value = '';
+		  document.getElementById('parentesco-acompanante').value = '';
+		}
+	  });
+	}
+	const fechaNacInput = document.getElementById('fecha-nacimiento');
+
+	function calcularEdad(fechaStr) {
+	  const hoy = new Date();
+	  const f = new Date(fechaStr);
+	  let edad = hoy.getFullYear() - f.getFullYear();
+	  const m = hoy.getMonth() - f.getMonth();
+	  if (m < 0 || (m === 0 && hoy.getDate() < f.getDate())) {
+		edad--;
+	  }
+	  return edad;
+	}
+
+	if (fechaNacInput && tipoIdentSel) {
+	  fechaNacInput.addEventListener('change', () => {
+		if (!fechaNacInput.value) return;
+		const edad = calcularEdad(fechaNacInput.value);
+		if (edad < 18 && tipoIdentSel.value !== 'TI') {
+		  showToast(
+			'El paciente es menor de edad, por favor seleccione el tipo de documento Tarjeta de Identidad.',
+			'error'
+		  );
+		}
+	  });
+	}
+	// Pacientes de muestra para búsqueda global
+	const pacientesBusqueda = [
+	  { nombre: 'Ana María Guzmán Vivanco', tipoId: 'CC', numeroId: '52417627' },
+	  { nombre: 'Nelson Armando Rodríguez Arévalo', tipoId: 'CC', numeroId: '79714835' },
+	  { nombre: 'Ana Cecilia Neita Burgos', tipoId: 'CC', numeroId: '52498751' },
+	  { nombre: 'Jaime Avila Mora', tipoId: 'CC', numeroId: '17526598' },
+	  { nombre: 'Rosalba Avila Mora', tipoId: 'CC', numeroId: '52149457' },
+	  { nombre: 'David Santiago Rodríguez Ávlia', tipoId: 'CC', numeroId: '1028860503' }
+	];
+
+	const inputSearch = document.getElementById('search-paciente');
+	const divSuggestions = document.getElementById('search-suggestions');
+
+	// Ir a CRUD de pacientes y diligenciar datos
+	function irACrudPacientes(paciente) {
+	  // cambia al menú de configuración
+	  //activarMenuConfiguracion();          // función que veremos abajo
+	  // seleccionar submenú pacientes
+	  mostrarPantallaPacientes();          // idem
+	  // diligenciar campos CRUD de pacientes
+		const tipoSel = document.getElementById('crud-tipo-identificacion');
+		const numInput = document.getElementById('crud-numero-identificacion');
+		const nomInput = document.getElementById('crud-nombre-paciente');
+
+	  if (tipoSel && numInput && nomInput) {
+		tipoSel.value = paciente.tipoId;
+		numInput.value = paciente.numeroId;
+		nomInput.value = paciente.nombre;
+	  }
+	}
+
+	if (inputSearch && divSuggestions) {
+	  inputSearch.addEventListener('input', () => {
+		const q = inputSearch.value.trim().toLowerCase();
+		divSuggestions.innerHTML = '';
+		if (!q) {
+		  divSuggestions.style.display = 'none';
+		  return;
+		}
+		const matches = pacientesBusqueda.filter(p =>
+		  p.nombre.toLowerCase().includes(q) ||
+		  p.numeroId.startsWith(q)
+		);
+		if (!matches.length) {
+		  divSuggestions.style.display = 'none';
+		  return;
+		}
+		matches.forEach(p => {
+		  const item = document.createElement('div');
+		  item.textContent = `${p.nombre} - ${p.tipoId}${p.numeroId}`;
+		  item.addEventListener('click', () => {
+			divSuggestions.style.display = 'none';
+			inputSearch.value = '';
+			irACrudPacientes(p);
+		  });
+		  divSuggestions.appendChild(item);
+		});
+		divSuggestions.style.display = 'block';
+	  });
+
+	  document.addEventListener('click', e => {
+		if (!divSuggestions.contains(e.target) && e.target !== inputSearch) {
+		  divSuggestions.style.display = 'none';
+		}
+	  });
+	}
+	const crudForm = document.getElementById('crud-pacientes-form');
+	const btnGuardarCrud = document.getElementById('btn-crud-guardar');
+	const btnEliminarCrud = document.getElementById('btn-crud-eliminar');
+	const btnCerrarCrud = document.getElementById('btn-crud-cerrar');
+
+	btnGuardarCrud?.addEventListener('click', () => {
+	  if (!crudForm.checkValidity()) {
+		crudForm.reportValidity();
+		return;
+	  }
+	  // aquí podrías hacer el POST al backend en el futuro
+	  showToast('Datos guardados con éxito.', 'success');
+	});
+
+	btnEliminarCrud?.addEventListener('click', () => {
+	  showToast('No se puede eliminar un paciente que tiene citas agendadas o valores pendientes por pagar.', 'error');
+	});
+
+	btnCerrarCrud?.addEventListener('click', () => {
+	  crudForm.reset();
+	});
+	// Historia Clínica temporal (hasta que la implementes)
+	document.getElementById('menu5')?.addEventListener('click', () => {
+	  showToast('Historia Clínica próximamente disponible', 'info');
+	});
+	// Manejo clics submenú config
+	document.querySelectorAll('.config-btn').forEach(btn => {
+	  btn.addEventListener('click', () => {
+		document.querySelectorAll('.config-btn').forEach(b => b.classList.remove('active'));
+		btn.classList.add('active');
+		if (btn.id === 'menu-pacientes') {
+		  document.querySelector('#config-panel').style.display = 'block';
+		}
+	  });
+	});
+
+	// CRUD Tabs (igual que agendamiento)
+	document.querySelectorAll('.crud-tab-btn').forEach(btn => {
+	  btn.addEventListener('click', function() {
+		document.querySelectorAll('.crud-tab-btn').forEach(b => b.classList.remove('active'));
+		this.classList.add('active');
+		document.querySelectorAll('.tab-section').forEach(tab => tab.classList.remove('active'));
+		document.getElementById(this.dataset.tab)?.classList.add('active');
+	  });
+	});
+
+	// Validaciones CRUD (adaptadas de agendamiento)
+	document.addEventListener('DOMContentLoaded', () => {
+	  // Autocompletar
+	  const crudCedula = document.getElementById('crud-numero-identificacion');
+	  const crudNombre = document.getElementById('crud-nombre-paciente');
+	  const crudCel = document.getElementById('crud-telefono-celular');
+	  // ... todos los IDs CRUD
+	  function autocompletarCrud() {
+		if (crudCedula.value.trim() === '79714835') {
+		  crudNombre.value = 'NELSON ARMANDO RODRIGUEZ AREVALO';
+		  // ... todos los valores exactos
+		} else {
+		  // Limpiar todos
+		}
+	  }
+	  crudCedula.addEventListener('change', autocompletarCrud);
+	  crudCedula.addEventListener('blur', autocompletarCrud);
+
+	  // Bloque acompañante
+	  const crudTipo = document.getElementById('crud-tipo-identificacion');
+	  const crudBloque = document.getElementById('crud-bloque-acompanante');
+	  crudTipo.addEventListener('change', () => {
+		crudBloque.style.display = crudTipo.value === 'TI' ? 'block' : 'none';
+	  });
+
+	  // Edad menor
+	  const crudFechaNac = document.getElementById('crud-fecha-nacimiento');
+	  // ... función calcularEdad igual
+	});
+
+	// Botones CRUD
+	document.getElementById('btn-crud-guardar').addEventListener('click', () => {
+	  if (document.getElementById('crud-pacientes-form').checkValidity()) {
+		showToast('Datos guardados con éxito.');
+	  }
+	});
+	document.getElementById('btn-crud-eliminar').addEventListener('click', () => {
+	  showToast('No se puede eliminar un paciente que tiene citas agendadas o valores pendientes por pagar.', 'error');
+	});
+	document.getElementById('btn-crud-cerrar').addEventListener('click', () => {
+	  document.querySelector('#config-panel').style.display = 'none';
+	});
+
+	// ===== Botón Historia Clínica - Toggle Timeline =====
+	document.getElementById('btn-historia-clinica')?.addEventListener('click', () => {
+	  desactivarBotonesHistoria();
+	  document.getElementById('btn-historia-clinica').classList.add('active');
+	  if (configPanel) configPanel.style.display = 'none';
+	  if (timelineHistoria) {
+		timelineHistoria.style.display = 'block';
+		setTimeout(() => timelineHistoria.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+	  }
+	  gestionarEncabezado(true);
+	});
+
+	
+	// ===== Gestión del encabezado de paciente =====
+	const encabezadoPaciente = document.getElementById('encabezado-paciente');
+	
+	// Función para cargar datos del formulario al encabezado
+	function cargarDatosEncabezado() {
+	  // Buscar los elementos del formulario
+	  const form = document.getElementById('config-panel');
+	  if (!form) return;
+	  
+	  // Obtener valores de los inputs del formulario
+	  const nombre = 'Nelson Armando Rodríguez Arévalo'; // form.querySelector('input[placeholder*="Nombre"]')?.value || '';
+	  const numDoc = '79714835'; // form.querySelector('input[placeholder*="Número"]')?.value || '';
+	  const telefono = ''; // form.querySelector('input[placeholder*="Teléfono fijo"]')?.value || '';
+	  const celular = '3025254441'; //form.querySelector('input[placeholder*="Teléfono celular"]')?.value || '';
+	  const celular2 = ''; //form.querySelector('input[placeholder*="Segundo"]')?.value || '';
+	  const pertenece = ''; //form.querySelector('input[placeholder*="quién pertenece"]')?.value || '';
+	  const direccion = 'Calle 185 # 25-25 '; //form.querySelector('textarea[placeholder*="Dirección"]')?.value || '';
+	  const email = 'nelsonarmandorodri@outlook.com'; //form.querySelector('input[type="email"]')?.value || '';
+	  const fechaNac = '1978/09/24'; //form.querySelector('input[type="date"]')?.value || '';
+	  const acompanante = ''; //form.querySelector('input[placeholder*="acompañante"]')?.value || '';
+	  
+	  // Buscar parentesco (viene después de acompañante)
+	  const inputs = form.querySelectorAll('input');
+	  let parentesco = '';
+	  for (let i = 0; i < inputs.length; i++) {
+		if (inputs[i].placeholder && inputs[i].placeholder.includes('acompañante')) {
+		  if (i + 1 < inputs.length) {
+			parentesco = inputs[i + 1].value || '';
+		  }
+		  break;
+		}
+	  }
+	  
+	  // Obtener selects
+	  const selects = form.querySelectorAll('select');
+	  const sexo = 'Masculino'; //selects[0]?.value || '';
+	  const lugarRes = 'Tenza'; //selects[1]?.value || '';
+	  
+	  // Calcular edad
+	  let edadTexto = '';
+	  if (fechaNac) {
+		const hoy = new Date();
+		const nacimiento = new Date(fechaNac);
+		let años = hoy.getFullYear() - nacimiento.getFullYear();
+		let meses = hoy.getMonth() - nacimiento.getMonth();
+		if (meses < 0) {
+		  años--;
+		  meses += 12;
+		}
+		edadTexto = '49 años'; //`${años} AÑOS ${meses} ${meses === 1 ? 'MES' : 'MESES'}`;
+	  }
+	  
+	  // Actualizar elementos del encabezado
+	  if (document.getElementById('enc-nombre')) {
+		document.getElementById('enc-nombre').textContent = nombre;
+		document.getElementById('enc-documento').textContent = numDoc;
+		document.getElementById('enc-fecha-nacimiento').textContent = fechaNac;
+		document.getElementById('enc-edad').textContent = edadTexto;
+		document.getElementById('enc-telefono').textContent = telefono;
+		document.getElementById('enc-celular').textContent = celular;
+		document.getElementById('enc-email').textContent = email;
+		document.getElementById('enc-direccion').textContent = direccion;
+		document.getElementById('enc-sexo').textContent = sexo;
+		document.getElementById('enc-lugar-residencia').textContent = lugarRes;
+		document.getElementById('enc-celular2').textContent = celular2;
+		document.getElementById('enc-pertenece').textContent = pertenece;
+		document.getElementById('enc-acompanante').textContent = acompanante;
+		document.getElementById('enc-parentesco').textContent = parentesco;
+	  }
+	}
+	
+	// Función para mostrar/ocultar encabezado según la pantalla
+	function gestionarEncabezado(mostrar) {
+	  if (encabezadoPaciente) {
+		encabezadoPaciente.style.display = mostrar ? 'block' : 'none';
+		if (mostrar) {
+		  cargarDatosEncabezado();
+		}
+	  }
+	}
+
+
+	// ===== Gestión de botones Historia Clínica =====
+	const configPanel = document.getElementById('config-panel');
+	const timelineHistoria = document.getElementById('timeline-historia-clinica');
+	const botonesHistoria = document.querySelectorAll('.btn-historia-clinica');
+
+	function desactivarBotonesHistoria() {
+	botonesHistoria.forEach(btn => btn.classList.remove('active'));
+	}
+
+	// Estado inicial
+	if (configPanel) configPanel.style.display = 'block';
+	if (timelineHistoria) timelineHistoria.style.display = 'none';
+
+	// Datos Personales
+	document.getElementById('btn-datos-personales')?.addEventListener('click', () => {
+	desactivarBotonesHistoria();
+	document.getElementById('btn-datos-personales').classList.add('active');
+	document.getElementById('anamnesis-form-container').classList.remove('active');
+	document.getElementById('anamnesis-form-container').style.display = 'none';
+	console.log('Datos Personales clickeado:',document.getElementById('anamnesis-form-container').style.display);
+	if (configPanel) configPanel.style.display = 'block';
+	if (timelineHistoria) timelineHistoria.style.display = 'none';
+	  gestionarEncabezado(false);
+	});
+
+	// Historia Clínica
+	document.getElementById('btn-historia-clinica')?.addEventListener('click', () => {
+	desactivarBotonesHistoria();
+	document.getElementById('btn-historia-clinica').classList.add('active');
+	if (configPanel) configPanel.style.display = 'none';
+	if (timelineHistoria) {
+		timelineHistoria.style.display = 'block';
+		setTimeout(() => timelineHistoria.scrollIntoView({ 
+		behavior: 'smooth', block: 'nearest' 
+		}), 100);
+	}
+	});
+
+	// Otros botones
+	['btn-consulta', 'btn-evoluciones', 'btn-anamnesis', 'btn-odontograma', 
+	 'btn-rx-documentos', 'btn-recetas', 'btn-doc-clinicos', 'btn-consentimientos'].forEach(btnId => {
+	document.getElementById(btnId)?.addEventListener('click', () => {
+		desactivarBotonesHistoria();
+		document.getElementById(btnId).classList.add('active');
+		if (configPanel) configPanel.style.display = 'none';
+		if (timelineHistoria) timelineHistoria.style.display = 'none';
+		gestionarEncabezado(true);
+	});
+	});
+
+	
+
+    // ANAMNESIS - Funcionalidad básica
+    (function() {
+      const btnConsulta = document.getElementById('btn-consulta');
+      const btnAnamnesis = document.getElementById('btn-anamnesis');
+      const btnHistoriaClinica = document.getElementById('btn-historia-clinica');
+      const formContainer = document.getElementById('anamnesis-form-container');
+      const fichaContainer = document.getElementById('ficha-anamnesis-container');
+      const timeline = document.getElementById('timeline-historia-clinica');
+      const configPanel = document.getElementById('config-panel');
+
+      let registros = [];
+
+      // Mostrar formulario
+    if (btnConsulta) {
+        btnConsulta.addEventListener('click', function() {
+          if (timeline) timeline.style.display = 'none';
+          if (fichaContainer) fichaContainer.classList.remove('active');
+          if (configPanel) configPanel.style.display = 'none';
+          if (formContainer) formContainer.classList.add('active');
+        });
+      }
+
+      // Mostrar timeline
+      if (btnHistoriaClinica) {
+        btnHistoriaClinica.addEventListener('click', function() {
+          if (formContainer) formContainer.classList.remove('active');
+          if (fichaContainer) fichaContainer.classList.remove('active');
+          if (configPanel) configPanel.style.display = 'none';
+          if (timeline) timeline.style.display = 'block';
+      });
+    }
+
+      // Mostrar ficha
+      if (btnAnamnesis) {
+        btnAnamnesis.addEventListener('click', function() {
+          if (timeline) timeline.style.display = 'none';
+          if (formContainer) formContainer.classList.remove('active');
+          if (configPanel) configPanel.style.display = 'none';
+          mostrarFicha();
+          if (fichaContainer) fichaContainer.classList.add('active');
+      });
+    }
+
+      // Agregar a historia
+      const btnAgregar = document.getElementById('btn-agregar-historia');
+      if (btnAgregar) {
+        btnAgregar.addEventListener('click', function() {
+          const motivo = document.getElementById('anamnesis-motivo').value.trim();
+          const enfermedad = document.getElementById('anamnesis-enfermedad').value.trim();
+          const patologicos = document.getElementById('anamnesis-patologicos').value.trim();
+          const farmacologicos = document.getElementById('anamnesis-farmacologicos').value.trim();
+          const odontologicos = document.getElementById('anamnesis-odontologicos').value.trim();
+
+          if (!motivo || !enfermedad || !patologicos || !farmacologicos || !odontologicos) {
+            alert('Complete todos los campos');
+          return;
+        }
+
+        const ahora = new Date();
+          const fecha = ahora.toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' });
+        const hora = ahora.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+          registros.push({ fecha, hora, motivo, enfermedad, patologicos });
+
+          // Agregar al timeline
+          const container = document.querySelector('.timeline-container');
+          if (container) {
+            const item = document.createElement('div');
+            item.className = 'timeline-item';
+            item.innerHTML = '<div class="timeline-date">' + fecha + '</div>' +
+              '<div class="timeline-marker"></div>' +
+              '<div class="timeline-content">' +
+              '<div class="evento-header antecedente"><span>ANTECEDENTE MÉDICO GUARDADO</span></div>' +
+              '<div class="evento-body">' +
+              '<p><strong>Motivo de consulta</strong></p><p>' + motivo + '</p>' +
+              '<p><strong>Enfermedad actual</strong></p><p>' + enfermedad + '</p>' +
+              '<p><strong>Antecedentes familiares</strong></p><p>' + patologicos + '</p>' +
+              '<p class="evento-info">' + hora + '</p>' +
+              '</div></div>';
+            container.insertBefore(item, container.firstChild);
+          }
+
+          // Limpiar
+          document.getElementById('anamnesis-motivo').value = '';
+          document.getElementById('anamnesis-enfermedad').value = '';
+          document.getElementById('anamnesis-patologicos').value = '';
+          document.getElementById('anamnesis-farmacologicos').value = '';
+          document.getElementById('anamnesis-odontologicos').value = '';
+
+          showToast('Guardado', false);
+
+          setTimeout(function() {
+            if (formContainer) formContainer.classList.remove('active');
+            if (timeline) timeline.style.display = 'block';
+          }, 1000);
+        });
+      }
+
+      function mostrarFicha() {
+        const content = document.getElementById('ficha-anamnesis-content');
+        if (!content) return;
+
+        if (registros.length === 0) {
+          content.innerHTML = '<div class="ficha-anamnesis-vacia">No hay registros</div>';
+        return;
+      }
+
+        const r = registros[registros.length - 1];
+        content.innerHTML = '<div class="anamnesis-titulo">ANAMNESIS</div>' +
+          '<div class="anamnesis-campo"><label class="anamnesis-label">MOTIVO:</label>' +
+          '<div class="ficha-datos-readonly">' + r.motivo + '</div></div>' +
+          '<div class="anamnesis-campo"><label class="anamnesis-label">ENFERMEDAD:</label>' +
+          '<div class="ficha-datos-readonly">' + r.enfermedad + '</div></div>' +
+          '<div class="anamnesis-campo"><label class="anamnesis-label">ANTECEDENTES:</label>' +
+          '<div class="ficha-datos-readonly">' + r.patologicos + '</div></div>';
+      }
+    })();
+
+	// =========================
+	// ALERTAS (Modal + Campana)
+	// Ajuste mínimo no invasivo
+	// =========================
+	(function () {
+		const btnGenerar = document.getElementById('btn-generar-alerta');
+		const modal = document.getElementById('modal-alerta');
+		const btnGuardar = document.getElementById('btn-guardar-alerta');
+
+		const inputFechaHora = document.getElementById('alerta-fecha-hora');
+		const txtAlerta = document.getElementById('alerta-texto');
+
+		const alertCenter = document.getElementById('alert-center');
+		const btnBell = document.getElementById('btn-alert-bell');
+		const badge = document.getElementById('alert-badge');
+		const dropdown = document.getElementById('alert-dropdown');
+		const list = document.getElementById('alert-list');
+		const empty = document.getElementById('alert-empty');
+
+		if (!btnGenerar || !modal || !btnGuardar || !alertCenter || !btnBell || !badge || !dropdown || !list || !empty) return;
+
+		/** Estado en memoria (mockup) **/
+		let alertas = [];
+
+		function ahoraTexto() {
+		// fecha y hora en es-CO
+		return new Date().toLocaleString('es-CO', {
+			year: 'numeric',
+			month: '2-digit',
+			day: '2-digit',
+			hour: '2-digit',
+			minute: '2-digit',
+			second: '2-digit'
+		});
+		}
+
+		function abrirModalAlerta() {
+		// set fecha/hora actual en readonly
+		inputFechaHora.value = ahoraTexto();
+
+		// reset UI (solo del modal)
+		txtAlerta.value = '';
+		const radios = document.querySelectorAll('input[name="tipo-alerta"]');
+		radios.forEach(r => (r.checked = false));
+
+		modal.style.display = 'flex';
+		}
+
+		function cerrarModalAlerta() {
+		modal.style.display = 'none';
+		}
+
+		// Cerrar modal al hacer click fuera del contenido (sin tocar tus otros modales)
+		modal.addEventListener('click', (e) => {
+		if (e.target === modal) cerrarModalAlerta();
+		});
+
+		// Abrir modal desde botón
+		btnGenerar.addEventListener('click', abrirModalAlerta);
+
+		function renderAlertas() {
+		const count = Math.max(0, alertas.length);
+
+		// Mostrar/ocultar campana según conteo (requisito: aparece cuando hay al menos 1)
+		alertCenter.style.display = count > 0 ? 'block' : 'none';
+
+		badge.textContent = String(count);
+
+		// Render lista
+		list.innerHTML = '';
+		if (count === 0) {
+			empty.style.display = 'block';
+			dropdown.style.display = 'none';
+			return;
+		}
+
+		empty.style.display = 'none';
+
+		alertas.forEach((a) => {
+			const item = document.createElement('div');
+			item.className = 'alert-item';
+
+			item.innerHTML =
+			'<div class="alert-item-top">' +
+				'<div class="alert-type">' + a.tipo + '</div>' +
+				'<button type="button" class="alert-x" aria-label="Eliminar alerta" data-id="' + a.id + '">×</button>' +
+			'</div>' +
+			'<div class="alert-text">' + escapeHtml(a.texto) + '</div>' +
+			'<div class="alert-dt">' + a.fechaHora + '</div>';
+
+			list.appendChild(item);
+		});
+		}
+
+		// Toggle dropdown (campana)
+		btnBell.addEventListener('click', (e) => {
+		e.stopPropagation();
+		if (alertas.length === 0) return;
+
+		dropdown.style.display = (dropdown.style.display === 'block') ? 'none' : 'block';
+		});
+
+		// Cerrar dropdown al click afuera
+		document.addEventListener('click', (e) => {
+		if (!dropdown.contains(e.target) && e.target !== btnBell) {
+			dropdown.style.display = 'none';
+		}
+		});
+
+		// Eliminar alerta (delegación)
+		list.addEventListener('click', (e) => {
+		const btn = e.target.closest('.alert-x');
+		if (!btn) return;
+
+		const id = btn.getAttribute('data-id');
+		alertas = alertas.filter(a => a.id !== id);
+
+		renderAlertas();
+		});
+
+		// Guardar alerta
+		btnGuardar.addEventListener('click', () => {
+		const radio = document.querySelector('input[name="tipo-alerta"]:checked');
+		const tipo = radio ? radio.value : '';
+		const texto = (txtAlerta.value || '').trim();
+		const fechaHora = inputFechaHora.value || ahoraTexto();
+
+		if (!tipo) {
+			showToast('Seleccione el tipo de alerta.');
+			return;
+		}
+		if (!texto) {
+			showToast('Registre el texto de la alerta.');
+			return;
+		}
+
+		alertas.unshift({
+			id: String(Date.now()) + '-' + String(Math.random()).slice(2),
+			tipo,
+			texto,
+			fechaHora
+		});
+
+		cerrarModalAlerta();
+		renderAlertas();
+
+		// opcional: feedback consistente con tu UI
+		if (typeof showToast === 'function') {
+			showToast('Alerta guardada', 'success');
+		}
+		});
+
+		// Utilidad mínima para evitar inyección en el HTML del item
+		function escapeHtml(str) {
+		return String(str)
+			.replaceAll('&', '&amp;')
+			.replaceAll('<', '&lt;')
+			.replaceAll('>', '&gt;')
+			.replaceAll('"', '&quot;')
+			.replaceAll("'", '&#039;');
+		}
+
+		// Inicial
+		renderAlertas();
+	})();
+
+
+	
+</script>
+
+</body>
+</html>

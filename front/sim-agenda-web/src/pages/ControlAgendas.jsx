@@ -1,12 +1,11 @@
-// src/pages/ControlAgendas.jsx
 import { useState, useMemo, useEffect } from 'react';
 import ModalVerCitas from '../components/ModalVerCitas';
 import ModalBloquearRango from '../components/ModalBloquearRango';
 import ModalAgendarCita from '../components/ModalAgendarCita';
 import { apiFetch } from '../api/client';
-import { FaUserMd } from 'react-icons/fa';
+import { FaUserMd, FaCalendarAlt, FaCalendarCheck, FaBan, FaSearch } from 'react-icons/fa';
 import { showToast, showConfirm } from '../utils/ui';
-import '../styles/estilos.css';
+import { Card, Select, Button, Badge } from '../components/ui';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -26,6 +25,7 @@ export default function ControlAgendas() {
   const [professionals, setProfessionals] = useState([]);
   const [holidays, setHolidays] = useState([]);
   const [appointments, setAppointments] = useState([]); // Citas del mes
+  const [blockedRanges, setBlockedRanges] = useState([]); // Bloqueos del mes
   const [loading, setLoading] = useState(false);
 
   const [modalVer, setModalVer] = useState(false);
@@ -49,8 +49,7 @@ export default function ControlAgendas() {
 
   async function cargarEspecialidades() {
     try {
-      const resp = await apiFetch(`${BACKEND_URL}/especialidades`);
-      console.log("Especialidades cargadas:", resp.data);
+      const resp = await apiFetch(`${BACKEND_URL}/especialidades/`);
       setEspecialidades(resp.data || []);
     } catch (err) {
       console.error('Error cargando especialidades', err);
@@ -58,7 +57,7 @@ export default function ControlAgendas() {
   }
 
   const especialidadesOptions = useMemo(() => 
-    especialidades.map(e => ({ v: e.codigo, t: e.nombre })), 
+    especialidades.map(e => ({ value: e.codigo, label: e.nombre })), 
   [especialidades]);
 
   useEffect(() => {
@@ -67,7 +66,7 @@ export default function ControlAgendas() {
 
   async function cargarProfesionales() {
     try {
-      const resp = await apiFetch(`${BACKEND_URL}/profesionales`);
+      const resp = await apiFetch(`${BACKEND_URL}/profesionales/`);
       setProfessionals(resp.data || []);
     } catch (err) {
       console.error('Error cargando profesionales', err);
@@ -87,23 +86,20 @@ export default function ControlAgendas() {
     if (professionals.length === 0) return;
     try {
       setLoading(true);
-      // Usar fecha local para evitar desfases de zona horaria
-      // Obtenemos el primer y último día del mes en curso según el estado local (year, month)
       const start = new Date(year, month, 1, 0, 0, 0);
       const end = new Date(year, month + 1, 0, 23, 59, 59);
       
       const startStr = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-01`;
       const endStr = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`;
       
-      console.log(`Consultando citas desde ${startStr} hasta ${endStr}`);
-      
       const profId = profSel === 'Todos' ? 0 : parseInt(profSel);
       const resp = await apiFetch(`${BACKEND_URL}/citas/profesional/${profId}/rango?inicio=${startStr}&fin=${endStr}`);
-      
-      console.log("Citas recibidas:", resp.data);
       setAppointments(resp.data || []);
+
+      const respBlocks = await apiFetch(`${BACKEND_URL}/rangos-bloqueados/rango?profesional_id=${profId}&inicio=${startStr}&fin=${endStr}`);
+      setBlockedRanges(respBlocks.data || []);
     } catch (err) {
-      console.error('Error cargando citas', err);
+      console.error('Error cargando datos de agenda', err);
     } finally {
       setLoading(false);
     }
@@ -135,10 +131,14 @@ export default function ControlAgendas() {
       const dateStr = `${year}-${String(monthIndex + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       const col = (startDay + d - 1) % 7;
       
-      // Contar citas para este día y este profesional
       const dailyApps = appointments.filter(a => 
         a.fecha === dateStr && 
-        (professional.id === a.profesional_id)
+        (Number(professional.id) === Number(a.profesional_id))
+      );
+
+      const dailyBlocks = blockedRanges.filter(b => 
+        b.fecha === dateStr && 
+        (Number(professional.id) === Number(b.profesional_id))
       );
 
       const cell = {
@@ -146,7 +146,9 @@ export default function ControlAgendas() {
         dateFull: dateStr,
         red: isHolidayOrSunday(date),
         appointmentCount: dailyApps.length,
-        appointments: dailyApps
+        appointments: dailyApps,
+        blockedCount: dailyBlocks.length,
+        blocks: dailyBlocks
       };
 
       currentRow[col] = cell;
@@ -165,11 +167,10 @@ export default function ControlAgendas() {
   }
 
   const calendars = useMemo(() => {
-    const profList = profSel === 'Todos' ? professionals : professionals.filter(p => p.id === parseInt(profSel));
+    const profList = profSel === 'Todos' ? professionals : professionals.filter(p => Number(p.id) === Number(profSel));
     return profList.map((p) => buildCalendar(year, month, p));
-  }, [year, month, profSel, professionals, holidays, appointments]);
+  }, [year, month, profSel, professionals, holidays, appointments, blockedRanges]);
 
-  // Citas para los modales (recalculadas si appointments cambia)
   const appointmentsDelDia = useMemo(() => {
     if (!profModal || !cellModal?.dateFull) return [];
     return appointments.filter(a => 
@@ -187,7 +188,6 @@ export default function ControlAgendas() {
     }
     if (tipo === 'M') {
       setPermiteModificarModal(true);
-      // Si hay citas, mostrar el modal de ver para elegir cuál modificar
       if (cell.appointmentCount > 0) {
         setModalVer(true);
       } else {
@@ -199,10 +199,9 @@ export default function ControlAgendas() {
 
   async function handleModifyAppointment(cita) {
     try {
-      // Obtener datos completos de la cita para el modal
       const resp = await apiFetch(`${BACKEND_URL}/citas/${cita.id}`);
       setCitaEdicion(resp.data);
-      setLockSelection(true); // Bloquear especialidad y profesional según requerimiento "B"
+      setLockSelection(true);
       setModalAgendar(true);
     } catch (err) {
       showToast('Error al cargar datos de la cita', 'error');
@@ -214,10 +213,8 @@ export default function ControlAgendas() {
     if (!ok) return;
 
     try {
-      // 1. Eliminar cita anterior
       await apiFetch(`${BACKEND_URL}/citas/${citaEdicion.id}`, { method: 'DELETE' });
 
-      // 2. Crear nueva cita
       const payload = {
         tipo_identificacion: citaEdicion.tipo_identificacion,
         numero_identificacion: citaEdicion.numero_identificacion,
@@ -253,123 +250,132 @@ export default function ControlAgendas() {
       showToast('Cita modificada correctamente.');
       setModalAgendar(false);
       setCitaEdicion(null);
-      cargarCitas(); // Recargar el calendario
+      cargarCitas();
     } catch (err) {
       showToast('Error al modificar la cita', 'error');
     }
   }
 
   return (
-    <section id="control-agendas-section">
-      <div className="controls">
-        <div className="control-group">
-          <label htmlFor="year-select">Año:</label>
-          <select
-            id="year-select"
-            value={year}
-            onChange={(e) => setYear(parseInt(e.target.value, 10))}
-          >
-            {years.map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="control-group">
-          <label htmlFor="month-select">Mes:</label>
-          <select
-            id="month-select"
-            value={month}
-            onChange={(e) => setMonth(parseInt(e.target.value))}
-          >
-            {monthNames.map((m, idx) => (
-              <option key={m} value={idx}>
-                {m}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="control-group">
-          <label htmlFor="professional-select">Profesional:</label>
-          <select
-            id="professional-select"
-            value={profSel}
-            onChange={(e) => setProfSel(e.target.value)}
-          >
-            <option value="Todos">Todos los profesionales</option>
-            {professionals.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nombre_completo}
-              </option>
-            ))}
-          </select>
+    <div className="max-w-7xl mx-auto space-y-6 animate-fadeIn">
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-[var(--color-brand-primary)]">Control de Agendas</h1>
+          <p className="text-[var(--color-text-secondary)]">Visualización y gestión de calendarios por profesional.</p>
         </div>
       </div>
 
-      <div id="calendars-container" className="calendars-grid">
+      {/* Filters */}
+      <Card>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Select
+            label="Año"
+            value={year}
+            onChange={(e) => setYear(parseInt(e.target.value, 10))}
+            options={years.map(y => ({ value: y, label: y }))}
+          />
+          <Select
+            label="Mes"
+            value={month}
+            onChange={(e) => setMonth(parseInt(e.target.value))}
+            options={monthNames.map((m, idx) => ({ value: idx, label: m }))}
+          />
+          <Select
+            label="Profesional"
+            value={profSel}
+            onChange={(e) => setProfSel(e.target.value)}
+            options={[{value: 'Todos', label: 'Todos los profesionales'}, ...professionals.map(p => ({ value: p.id, label: p.nombre_completo }))]}
+          />
+        </div>
+      </Card>
+
+      {/* Calendars Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {calendars.map((cal) => (
-          <div key={cal.professional.id} className="calendar-card">
-            <div className="calendar-card-header">
-              <FaUserMd className="icon" />
-              <h3>{cal.professional.nombre_completo}</h3>
+          <Card key={cal.professional.id} className="overflow-hidden">
+            {/* Calendar Header */}
+            <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
+               <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                  <FaUserMd size={20} />
+               </div>
+               <h3 className="font-semibold text-lg text-gray-800">{cal.professional.nombre_completo}</h3>
             </div>
-            <table>
-              <thead>
-                <tr>
-                  {cal.dayNames.map((d) => (
-                    <th key={d}>{d}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {cal.rows.map((row, i) => (
-                  <tr key={i}>
-                    {row.map((cell, j) => {
-                      if (!cell) return <td key={j} className="empty-cell" />;
-                      if (cell.red) {
-                        return (
-                          <td key={j} className="holiday-cell">
-                            <div className="day-number">{cell.day}</div>
-                          </td>
-                        );
-                      }
-                      return (
-                        <td key={j} className="work-cell">
-                          <div className="day-number">{cell.day}</div>
-                          <div className="actions-row">
-                            <button
-                              className="btn-a"
-                              title={cell.appointmentCount > 0 ? `${cell.appointmentCount} citas agendadas` : 'Ver citas'}
-                              onClick={() => openModal('A', cal.professional, cell)}
-                            >
-                              A {cell.appointmentCount > 0 && <span className="count-badge">{cell.appointmentCount}</span>}
-                            </button>
-                            <button
-                              className="btn-m"
-                              title="Modificar horario"
-                              onClick={() => openModal('M', cal.professional, cell)}
-                            >
-                              M {cell.appointmentCount > 0 && <span className="count-badge">{cell.appointmentCount}</span>}
-                            </button>
-                            <button
-                              className="btn-b"
-                              title="Bloquear rango"
-                              onClick={() => openModal('B', cal.professional, cell)}
-                            >
-                              B
-                            </button>
-                          </div>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+
+            {/* Calendar Grid */}
+            <div className="w-full overflow-x-auto">
+               <table className="w-full text-center border-collapse">
+                 <thead>
+                   <tr>
+                     {cal.dayNames.map((d) => (
+                       <th key={d} className="py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">{d}</th>
+                     ))}
+                   </tr>
+                 </thead>
+                 <tbody className="text-sm">
+                   {cal.rows.map((row, i) => (
+                     <tr key={i}>
+                       {row.map((cell, j) => {
+                         if (!cell) return <td key={j} className="p-2 bg-gray-50/30"></td>;
+                         
+                         const isToday = false; // Implement logic if needed
+                         const isHoliday = cell.red;
+                         
+                         return (
+                           <td key={j} className={`p-1 border border-gray-100 align-top h-24 ${isHoliday ? 'bg-red-50' : 'bg-white hover:bg-gray-50 transition-colors'}`}>
+                             <div className="flex flex-col h-full justify-between">
+                                <div className={`text-right px-1 text-xs font-semibold ${isHoliday ? 'text-red-500' : 'text-gray-400'}`}>
+                                   {cell.day}
+                                </div>
+                                
+                                <div className="space-y-1 p-1">
+                                  {/* Actions */}
+                                   <div className="flex justify-center gap-1">
+                                      <button 
+                                        onClick={() => openModal('A', cal.professional, cell)} 
+                                        className={`w-6 h-6 flex items-center justify-center rounded text-xs font-bold transition-colors ${cell.appointmentCount > 0 ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}
+                                        title="Ver Citas"
+                                      >
+                                        A
+                                      </button>
+                                      <button 
+                                        onClick={() => openModal('M', cal.professional, cell)}
+                                        className={`w-6 h-6 flex items-center justify-center rounded text-xs font-bold transition-colors ${cell.appointmentCount > 0 ? 'bg-amber-100 text-amber-700 hover:bg-amber-200' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}
+                                         title="Modificar"
+                                      >
+                                        M
+                                      </button>
+                                      <button 
+                                        onClick={() => openModal('B', cal.professional, cell)}
+                                        className="w-6 h-6 flex items-center justify-center rounded text-xs font-bold bg-gray-100 text-gray-400 hover:bg-gray-200 transition-colors"
+                                         title="Bloquear"
+                                      >
+                                        B
+                                      </button>
+                                   </div>
+                                    {cell.appointmentCount > 0 && (
+                                      <div className="mt-1">
+                                        <Badge variant={isHoliday ? 'warning' : 'success'} size="sm">
+                                          {cell.appointmentCount} citas
+                                        </Badge>
+                                      </div>
+                                    )}
+                                    {cell.blockedCount > 0 && (
+                                      <div className="mt-1 flex items-center gap-1 justify-center bg-red-100 text-red-700 p-1 rounded text-[10px] font-bold">
+                                         <FaBan size={10} /> BLOQUEADO
+                                      </div>
+                                    )}
+                                 </div>
+                             </div>
+                           </td>
+                         );
+                       })}
+                     </tr>
+                   ))}
+                 </tbody>
+               </table>
+            </div>
+          </Card>
         ))}
       </div>
 
@@ -390,6 +396,7 @@ export default function ControlAgendas() {
         appointments={appointmentsDelDia}
         onClose={() => setModalBloq(false)}
         onModifyAppointment={handleModifyAppointment}
+        onRefresh={cargarCitas}
       />
 
       <ModalAgendarCita
@@ -400,6 +407,6 @@ export default function ControlAgendas() {
         onClose={() => setModalAgendar(false)}
         onConfirmar={confirmarModificacion}
       />
-    </section>
+    </div>
   );
 }

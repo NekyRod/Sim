@@ -1,0 +1,11 @@
+INFO:     Will watch for changes in these directories: ['D:\\OneDrive\\Desarr\\Proyectos\\GOI\\back']
+INFO:     Uvicorn running on http://127.0.0.1:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [22916] using WatchFiles
+LOADING SETTINGS ROUTES MODULE
+SETTINGS ROUTER ROUTES: [APIRoute(path='/admin/settings/smtp', name='get_smtp_config', methods=['GET']), APIRoute(path='/admin/settings/smtp', name='update_smtp_config', methods=['PUT']), APIRoute(path='/admin/settings/smtp/test', name='test_smtp', methods=['POST'])]
+SUCCESSFULLY IMPORTED SETTINGS ROUTES
+--- INCLUDING SETTINGS ROUTER ---
+ROUTER ROUTES BEFORE INCLUDE: [APIRoute(path='/admin/settings/smtp', name='get_smtp_config', methods=['GET']), APIRoute(path='/admin/settings/smtp', name='update_smtp_config', methods=['PUT']), APIRoute(path='/admin/settings/smtp/test', name='test_smtp', methods=['POST'])]
+INFO:     Started server process [24024]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.

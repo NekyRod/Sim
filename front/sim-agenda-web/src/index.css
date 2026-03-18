@@ -1,0 +1,272 @@
+@import "tailwindcss";
+
+@theme {
+  /* ========================================
+     BRAND COLORS - Odontología Premium
+     ======================================== */
+
+  /* Primary: Azul clínico confiable */
+  --color-brand-primary: #295080;
+  --color-brand-primary-hover: #3466a1;
+  --color-brand-primary-dark: #1a3a5f;
+  --color-brand-primary-light: #e8f0f7;
+  --color-brand-primary-50: #f0f5fa;
+
+  /* Accent: Teal/Menta fresco y limpio */
+  --color-brand-accent: #14b8a6;
+  --color-brand-accent-hover: #0d9488;
+  --color-brand-accent-dark: #0f766e;
+  --color-brand-accent-light: #ccfbf1;
+  --color-brand-accent-50: #f0fdfa;
+
+  /* Backward compatibility */
+  --color-primary: #295080;
+  --color-primary-hover: #3466a1;
+  --color-primary-dark: #154d91;
+
+  /* ========================================
+     SURFACE COLORS - Grises suaves
+     ======================================== */
+
+  --color-surface-background: #f5f7fa;
+  --color-surface-primary: #ffffff;
+  --color-surface-secondary: #f8fafc;
+  --color-surface-elevated: #ffffff;
+  --color-surface-overlay: rgba(30, 42, 65, 0.4);
+
+  /* Backward compatibility */
+  --color-background: #f5f7fa;
+  --color-surface: #ffffff;
+
+  /* ========================================
+     TEXT COLORS - Jerarquía clara
+     ======================================== */
+
+  --color-text-primary: #1a202c;
+  --color-text-secondary: #4a5568;
+  --color-text-tertiary: #718096;
+  --color-text-muted: #a0aec0;
+  --color-text-disabled: #cbd5e0;
+  --color-text-inverse: #ffffff;
+
+  /* ========================================
+     STATUS COLORS - Estados del sistema
+     ======================================== */
+
+  /* Success: Verde clínico */
+  --color-status-success: #10b981;
+  --color-status-success-bg: #d1fae5;
+  --color-status-success-border: #6ee7b7;
+
+  /* Warning: Amarillo atención */
+  --color-status-warning: #f59e0b;
+  --color-status-warning-bg: #fef3c7;
+  --color-status-warning-border: #fcd34d;
+
+  /* Danger: Rojo urgente */
+  --color-status-danger: #ef4444;
+  --color-status-danger-bg: #fee2e2;
+  --color-status-danger-border: #fca5a5;
+
+  /* Info: Azul informativo */
+  --color-status-info: #3b82f6;
+  --color-status-info-bg: #dbeafe;
+  --color-status-info-border: #93c5fd;
+
+  /* ========================================
+     BORDER COLORS
+     ======================================== */
+
+  --color-border-primary: #e2e8f0;
+  --color-border-secondary: #cbd5e0;
+  --color-border-hover: #a0aec0;
+  --color-border-focus: #295080;
+
+  /* ========================================
+     TYPOGRAPHY SCALE
+     ======================================== */
+
+  /* Font families */
+  --font-family-base:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-family-fallback: Arial, sans-serif;
+
+  /* Font sizes */
+  --font-size-xs: 0.75rem; /* 12px */
+  --font-size-sm: 0.875rem; /* 14px */
+  --font-size-base: 1rem; /* 16px */
+  --font-size-lg: 1.125rem; /* 18px */
+  --font-size-xl: 1.25rem; /* 20px */
+  --font-size-2xl: 1.5rem; /* 24px */
+  --font-size-3xl: 1.875rem; /* 30px */
+  --font-size-4xl: 2.25rem; /* 36px */
+
+  /* Font weights */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Line heights */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* ========================================
+     SPACING SCALE - Consistente
+     ======================================== */
+
+  --spacing-0: 0;
+  --spacing-1: 0.25rem; /* 4px */
+  --spacing-2: 0.5rem; /* 8px */
+  --spacing-3: 0.75rem; /* 12px */
+  --spacing-4: 1rem; /* 16px */
+  --spacing-5: 1.25rem; /* 20px */
+  --spacing-6: 1.5rem; /* 24px */
+  --spacing-8: 2rem; /* 32px */
+  --spacing-10: 2.5rem; /* 40px */
+  --spacing-12: 3rem; /* 48px */
+  --spacing-16: 4rem; /* 64px */
+
+  /* ========================================
+     BORDER RADIUS - Suaves 12-16px
+     ======================================== */
+
+  --radius-none: 0;
+  --radius-sm: 0.25rem; /* 4px */
+  --radius-md: 0.5rem; /* 8px */
+  --radius-lg: 0.75rem; /* 12px */
+  --radius-xl: 1rem; /* 16px */
+  --radius-2xl: 1.5rem; /* 24px */
+  --radius-full: 9999px;
+
+  /* ========================================
+     SHADOWS - Suaves y profesionales
+     ======================================== */
+
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md:
+    0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg:
+    0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl:
+    0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+
+  /* Focus shadow */
+  --shadow-focus: 0 0 0 3px var(--color-brand-primary-light);
+  --shadow-focus-accent: 0 0 0 3px var(--color-brand-accent-light);
+
+  /* ========================================
+     TRANSITIONS
+     ======================================== */
+
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ========================================
+     Z-INDEX SCALE
+     ======================================== */
+
+  --z-index-dropdown: 1000;
+  --z-index-sticky: 1020;
+  --z-index-fixed: 1030;
+  --z-index-modal-backdrop: 1040;
+  --z-index-modal: 1050;
+  --z-index-popover: 1060;
+  --z-index-tooltip: 1070;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-surface-background);
+    font-family: var(--font-family-base);
+    color: var(--color-text-primary);
+    line-height: var(--line-height-normal);
+    font-size: var(--font-size-base);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Fallback para navegadores sin soporte de Inter */
+  @supports not (font-family: "Inter") {
+    body {
+      font-family: var(--font-family-fallback);
+    }
+  }
+}
+
+/* ========================================
+   SUBTLE CLINICAL ANIMATIONS
+   ======================================== */
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@layer utilities {
+  /* Animation classes */
+  .animate-shimmer {
+    animation: shimmer 2s ease-in-out infinite;
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  .animate-slideUp {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .animate-slideInRight {
+    animation: slideInRight 0.2s ease-out;
+  }
+
+  /* Transition utilities */
+  .transition-clinical {
+    transition: all var(--transition-base);
+  }
+
+  .transition-clinical-fast {
+    transition: all var(--transition-fast);
+  }
+}

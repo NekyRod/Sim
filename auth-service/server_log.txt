@@ -1,0 +1,24 @@
+INFO:     Started server process [14200]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+[CORS-DEBUG] Request from origin: http://localhost:5173
+[AUTH-DB] Connecting: host=localhost, db=sim, user=admiSim, port=5432
+SUCCESS: DB Connected as user: admiSim on database: sim
+INFO:     127.0.0.1:5659 - "POST /auth/token HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:5663 - "OPTIONS /auth/token HTTP/1.1" 200 OK
+INFO:     127.0.0.1:5702 - "OPTIONS /auth/token HTTP/1.1" 200 OK
+[CORS-DEBUG] Request from origin: http://localhost:5173
+INFO:     127.0.0.1:5839 - "POST /auth/token HTTP/1.1" 422 Unprocessable Content
+[CORS-DEBUG] Request from origin: http://localhost:5173
+[AUTH-DB] Connecting: host=localhost, db=sim, user=admiSim, port=5432
+SUCCESS: DB Connected as user: admiSim on database: sim
+INFO:     127.0.0.1:22883 - "POST /auth/token HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:22889 - "OPTIONS /auth/token HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42454 - "OPTIONS /auth/token HTTP/1.1" 200 OK
+[CORS-DEBUG] Request from origin: http://localhost:5173
+[AUTH-DB] Connecting: host=localhost, db=sim, user=admiSim, port=5432
+SUCCESS: DB Connected as user: admiSim on database: sim
+[AUTH-DB] Connecting: host=localhost, db=sim, user=admiSim, port=5432
+SUCCESS: DB Connected as user: admiSim on database: sim
+INFO:     127.0.0.1:42454 - "POST /auth/token HTTP/1.1" 200 OK

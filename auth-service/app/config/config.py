@@ -1,7 +1,6 @@
-# Configuración central, carga de variables de entorno, etc.
 import os
 import json
-from tkinter import messagebox
+# from tkinter import messagebox  <-- Removed for headless/docker support
 from app.config.crypt_util import encrypt_text, decrypt_text, CONFIG_PATH
 
 # Archivo donde se guardará la configuración
@@ -20,7 +19,7 @@ def load_config():
             #print ('Configuración cargada:', config)
             return config
         except Exception as e:
-            messagebox.showerror("Error", "Error al leer configuración: " + str(e))
+            print("Error al leer configuración: " + str(e))
             return None
     return None
 
@@ -37,4 +36,4 @@ def save_config(config):
         with open(CONFIG_FILE, "w", encoding="utf-8") as f:
             f.write(encrypted_data)
     except Exception as e:
-        messagebox.showerror("Error", "Error al guardar configuración: " + str(e))
+        print("Error al guardar configuración: " + str(e))

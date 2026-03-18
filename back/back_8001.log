@@ -1,0 +1,211 @@
+INFO:     Started server process [20608]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8001 (Press CTRL+C to quit)
+INFO:     127.0.0.1:24285 - "OPTIONS /profesionales HTTP/1.1" 200 OK
+INFO:     127.0.0.1:31837 - "OPTIONS /profesionales HTTP/1.1" 200 OK
+INFO:     127.0.0.1:31837 - "GET /profesionales HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:24285 - "GET /profesionales HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:31837 - "OPTIONS /profesionales/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:31837 - "OPTIONS /profesionales/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:24285 - "GET /profesionales/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:31837 - "GET /profesionales/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:31837 - "OPTIONS /citas/profesional/0/rango?inicio=2026-02-02&fin=2026-02-07 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:24285 - "GET /profesionales HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:11502 - "OPTIONS /citas/profesional/0/rango?inicio=2026-02-02&fin=2026-02-07 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:31837 - "GET /profesionales HTTP/1.1" 307 Temporary Redirect
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:24285 - "GET /citas/profesional/0/rango?inicio=2026-02-02&fin=2026-02-07 HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:11502 - "GET /citas/profesional/0/rango?inicio=2026-02-02&fin=2026-02-07 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:31837 - "GET /profesionales/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:11502 - "GET /profesionales/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11502 - "OPTIONS /pacientes HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50473 - "OPTIONS /tiposidentificacion HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11502 - "OPTIONS /ciudadesresidencia HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50473 - "OPTIONS /pacientes HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11502 - "OPTIONS /tiposidentificacion HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50473 - "OPTIONS /ciudadesresidencia HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11502 - "GET /pacientes HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:50473 - "GET /tiposidentificacion HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:11502 - "GET /ciudadesresidencia HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:50473 - "GET /pacientes HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:11502 - "OPTIONS /pacientes/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50473 - "GET /tiposidentificacion HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:11502 - "GET /ciudadesresidencia HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:50473 - "OPTIONS /tiposidentificacion/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50473 - "OPTIONS /ciudadesresidencia/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50473 - "OPTIONS /tiposidentificacion/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:50473 - "GET /pacientes/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11502 - "GET /tiposidentificacion/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:11502 - "GET /pacientes/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50473 - "GET /ciudadesresidencia/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:11502 - "GET /tiposidentificacion/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50473 - "GET /ciudadesresidencia/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11502 - "OPTIONS /tiposservicio HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:40093 - "GET /ciudadesresidencia HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:54971 - "OPTIONS /tipospbs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10184 - "OPTIONS /especialidades/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11749 - "OPTIONS /tiposservicio HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11502 - "OPTIONS /tipospbs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54971 - "OPTIONS /especialidades/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40093 - "GET /ciudadesresidencia HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:10184 - "GET /tiposservicio HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:11502 - "GET /tipospbs HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:40093 - "GET /tiposservicio HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:11502 - "GET /tipospbs HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:54971 - "OPTIONS /tiposservicio/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11749 - "OPTIONS /tipospbs/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:50473 - "GET /tiposidentificacion/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:10184 - "GET /especialidades/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:54971 - "GET /ciudadesresidencia/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:11502 - "GET /tipospbs/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:11749 - "GET /tiposservicio/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:40093 - "GET /tiposidentificacion/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50473 - "GET /especialidades/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:10184 - "GET /ciudadesresidencia/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11502 - "GET /tiposservicio/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54971 - "GET /tipospbs/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54971 - "OPTIONS /festivos/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11502 - "GET /profesionales HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:10184 - "OPTIONS /especialidades HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50473 - "OPTIONS /festivos/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40093 - "OPTIONS /especialidades HTTP/1.1" 200 OK
+INFO:     127.0.0.1:11749 - "GET /profesionales HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:50473 - "GET /especialidades HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:11749 - "GET /especialidades HTTP/1.1" 307 Temporary Redirect
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:54971 - "GET /festivos/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:11749 - "GET /especialidades/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:50473 - "GET /festivos/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40093 - "GET /profesionales/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:54971 - "GET /especialidades/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54971 - "OPTIONS /citas/profesional/0/rango?inicio=2026-02-01&fin=2026-02-28 HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:54971 - "GET /citas/profesional/0/rango?inicio=2026-02-01&fin=2026-02-28 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50473 - "GET /profesionales/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:50473 - "GET /citas/profesional/0/rango?inicio=2026-02-01&fin=2026-02-28 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37586 - "GET /ciudadesresidencia HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:13171 - "GET /tiposservicio HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:59065 - "GET /tipospbs HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:37586 - "GET /ciudadesresidencia HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:13171 - "GET /tiposservicio HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:59065 - "GET /tipospbs HTTP/1.1" 307 Temporary Redirect
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:46667 - "GET /especialidades/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34035 - "GET /tiposidentificacion/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:37586 - "GET /ciudadesresidencia/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13171 - "GET /tiposservicio/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59065 - "GET /tipospbs/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:46667 - "GET /especialidades/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34035 - "GET /tiposidentificacion/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37586 - "GET /ciudadesresidencia/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:13171 - "GET /tiposservicio/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59065 - "GET /tipospbs/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:37861 - "GET /ciudadesresidencia HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:48745 - "GET /tiposservicio HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:18035 - "GET /tipospbs HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:37861 - "GET /ciudadesresidencia HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:48745 - "GET /tiposservicio HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:18035 - "GET /tipospbs HTTP/1.1" 307 Temporary Redirect
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:46885 - "GET /tiposidentificacion/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:36094 - "GET /especialidades/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:48745 - "GET /tiposservicio/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:18035 - "GET /tipospbs/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:46885 - "GET /tiposidentificacion/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36094 - "GET /especialidades/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48745 - "GET /tiposservicio/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:18035 - "GET /tipospbs/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37861 - "GET /ciudadesresidencia/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:18035 - "GET /ciudadesresidencia/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57779 - "OPTIONS /tiposidentificacion/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:29069 - "OPTIONS /ciudadesresidencia HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62707 - "OPTIONS /tiposservicio HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42685 - "OPTIONS /tipospbs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64247 - "OPTIONS /especialidades/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1362 - "OPTIONS /tiposidentificacion/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57779 - "OPTIONS /ciudadesresidencia HTTP/1.1" 200 OK
+INFO:     127.0.0.1:29069 - "OPTIONS /tiposservicio HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62707 - "OPTIONS /tipospbs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42685 - "OPTIONS /especialidades/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57779 - "GET /ciudadesresidencia HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:42685 - "GET /tiposservicio HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:62707 - "GET /tipospbs HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:64247 - "GET /ciudadesresidencia HTTP/1.1" 307 Temporary Redirect
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:57779 - "GET /tiposservicio HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:42685 - "OPTIONS /ciudadesresidencia/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62707 - "GET /tipospbs HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:64247 - "OPTIONS /tiposservicio/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42685 - "OPTIONS /tipospbs/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:29069 - "GET /tiposidentificacion/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:62707 - "GET /ciudadesresidencia/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:1362 - "GET /especialidades/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42685 - "GET /tiposservicio/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:57779 - "GET /tipospbs/ HTTP/1.1" 200 OK
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': 'RAqk3TqV1hSGlVooeJHd', 'port': 5432}
+INFO:     127.0.0.1:64247 - "GET /tiposidentificacion/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:29069 - "GET /ciudadesresidencia/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62707 - "GET /especialidades/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:1362 - "GET /tiposservicio/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42685 - "GET /tipospbs/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:5288 - "POST /patient/chat/sessions HTTP/1.1" 404 Not Found

@@ -1,11 +1,10 @@
-// src/pages/config/Profesionales.jsx
-
 import { useState, useEffect, useMemo } from 'react';
-import { FaUserMd, FaSearch, FaFileExcel } from 'react-icons/fa';
+import { FaUserMd, FaSearch, FaFileExcel, FaEdit, FaTrash, FaUserPlus, FaStethoscope } from 'react-icons/fa';
 import { apiFetch } from '../../api/client';
 import { showToast, showConfirm } from '../../utils/ui';
 import { exportToExcel } from '../../utils/excel';
 import ModalEspecialidades from '../../components/ModalEspecialidades';
+import { Card, Input, Select, Button, Table, Badge } from '../../components/ui';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -52,32 +51,6 @@ export default function Profesionales() {
     );
   }, [profesionales, searchTerm]);
 
-  const handleExportExcel = () => {
-    if (filteredProfesionales.length === 0) {
-      showToast('No hay datos para exportar', 'error');
-      return;
-    }
-
-    const dataToExport = filteredProfesionales.map(p => ({
-      'Nombre Completo': p.nombre_completo,
-      'Tipo ID': p.tipo_identificacion,
-      'Número ID': p.numero_identificacion,
-      'NIT': p.nit || '',
-      'Correo': p.correo || '',
-      'Celular': p.celular || '',
-      'Teléfono': p.telefono || '',
-      'Especialidad': p.especialidad || 'N/A',
-      'Ciudad': p.ciudad || '',
-      'Departamento': p.departamento || '',
-      'Dirección': p.direccion || '',
-      'Estado Cuenta': p.estado_cuenta,
-      'Activo': p.activo ? 'Sí' : 'No'
-    }));
-
-    exportToExcel(dataToExport, 'Profesionales.xlsx', 'Profesionales');
-    showToast('Archivo Excel generado correctamente');
-  };
-
   useEffect(() => {
     cargarDatosIniciales();
   }, []);
@@ -108,7 +81,6 @@ export default function Profesionales() {
   async function handleSubmit(e) {
     e.preventDefault();
 
-    // Generar nombre_completo
     const prenombreSeleccionado = prenombres.find(p => p.id === parseInt(prenombreId));
     const prenombreTexto = prenombreSeleccionado ? prenombreSeleccionado.nombre : '';
     const nombreCompleto = `${prenombreTexto} ${nombre} ${apellidos}`.trim();
@@ -179,16 +151,15 @@ export default function Profesionales() {
   }
 
   async function handleEliminar(id) {
-    const ok = await showConfirm('¿Está seguro de eliminar este profesional?');
-    if (!ok) return;
-
-    try {
-      await apiFetch(`${BACKEND_URL}/profesionales/${id}`, { method: 'DELETE' });
-      showToast('Profesional eliminado correctamente');
-      cargarDatosIniciales();
-    } catch (err) {
-      console.error('Error al eliminar:', err);
-      showToast('Error al eliminar el profesional', 'error');
+    if (await showConfirm('¿Está seguro de eliminar este profesional?')) {
+      try {
+        await apiFetch(`${BACKEND_URL}/profesionales/${id}`, { method: 'DELETE' });
+        showToast('Profesional eliminado correctamente');
+        cargarDatosIniciales();
+      } catch (err) {
+        console.error('Error al eliminar:', err);
+        showToast('Error al eliminar el profesional', 'error');
+      }
     }
   }
 
@@ -222,298 +193,234 @@ export default function Profesionales() {
     }
   }
 
+  function handleExportExcel() {
+    if (filteredProfesionales.length === 0) return showToast('No hay datos para exportar', 'error');
+    const dataToExport = filteredProfesionales.map(p => ({
+      'Nombre Completo': p.nombre_completo,
+      'Tipo ID': p.tipo_identificacion,
+      'Número ID': p.numero_identificacion,
+      'Especialidad': p.especialidad || 'N/A',
+      'Celular': p.celular || '',
+      'Estado': p.estado_cuenta,
+      'Activo': p.activo ? 'Sí' : 'No'
+    }));
+    exportToExcel(dataToExport, 'Profesionales.xlsx', 'Profesionales');
+  }
 
-  if (loading) return <div className="cargando">Cargando profesionales...</div>;
-  if (error) return <div className="error-mensaje">{error}</div>;
+  const columns = [
+    { key: 'nombre_completo', label: 'Nombre' },
+    { key: 'tipo_identificacion', label: 'Tipo ID', render: (val) => <Badge size="sm" variant="neutral">{val}</Badge> },
+    { key: 'numero_identificacion', label: 'Número ID' },
+    { key: 'especialidad', label: 'Especialidad', render: (val) => <Badge variant="info">{val || 'N/A'}</Badge> },
+    { key: 'celular', label: 'Celular', render: (val) => val || 'N/A' },
+    { 
+      key: 'estado_cuenta', 
+      label: 'Estado',
+      render: (val, row) => (
+         <Badge variant={val === 'Habilitada' && row.activo ? 'success' : 'danger'}>
+           {val} {row.activo ? '' : '(Inactivo)'}
+         </Badge>
+      )
+    },
+    {
+      key: 'actions',
+      label: 'Acciones',
+      render: (_, row) => (
+        <div className="flex gap-2">
+          <Button variant="ghost" size="sm" onClick={() => handleEditar(row)} className="!p-2 text-blue-600 hover:text-blue-800">
+            <FaEdit />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => handleEliminar(row.id)} className="!p-2 text-red-600 hover:text-red-800">
+            <FaTrash />
+          </Button>
+        </div>
+      )
+    }
+  ];
+
+  if (loading) return <div className="p-8 text-center text-gray-500">Cargando base de profesionales...</div>;
+  if (error) return <div className="p-8 text-center text-red-500">{error}</div>;
 
   return (
-    <div className="pagina-config">
-      <h2>
-        <FaUserMd /> Gestión de Profesionales
-      </h2>
-
-      {/* FORMULARIO */}
-      <div className="formulario-config">
-        <h3>{modoEdicion ? 'Editar Profesional' : 'Nuevo Profesional'}</h3>
-        <form onSubmit={handleSubmit}>
-          <label>
-            Nombre *
-            <input
-              type="text"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              placeholder="ADRIANA YORMARY"
-              required
-            />
-          </label>
-
-          <label>
-            Apellidos *
-            <input
-              type="text"
-              value={apellidos}
-              onChange={(e) => setApellidos(e.target.value)}
-              placeholder="GARCIA PARRA"
-              required
-            />
-          </label>
-
-          <label>
-            Prenombre
-            <select value={prenombreId} onChange={(e) => setPrenombreId(e.target.value)}>
-              <option value="">Seleccione uno</option>
-              {prenombres.map(p => (
-                <option key={p.id} value={p.id}>{p.nombre}</option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Tipo de Identificación *
-            <select
-              value={tipoIdentificacion}
-              onChange={(e) => setTipoIdentificacion(e.target.value)}
-              required
-            >
-              <option value="">Seleccione uno</option>
-              {tiposIdentificacion.map(t => (
-                <option key={t.id} value={t.codigo}>{t.nombre}</option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            # Número de Identificación *
-            <input
-              type="text"
-              value={numeroIdentificacion}
-              onChange={(e) => setNumeroIdentificacion(e.target.value)}
-              placeholder="52527794"
-              required
-            />
-          </label>
-
-          <label>
-            NIT
-            <input
-              type="text"
-              value={nit}
-              onChange={(e) => setNit(e.target.value)}
-              placeholder="901517751"
-            />
-          </label>
-
-          <label>
-            Correo
-            <input
-              type="email"
-              value={correo}
-              onChange={(e) => setCorreo(e.target.value)}
-              placeholder="correo@ejemplo.com"
-            />
-          </label>
-
-          <label>
-            Celular
-            <input
-              type="text"
-              value={celular}
-              onChange={(e) => setCelular(e.target.value)}
-              placeholder="3212037599"
-            />
-          </label>
-
-          <label>
-            Teléfono
-            <input
-              type="text"
-              value={telefono}
-              onChange={(e) => setTelefono(e.target.value)}
-              placeholder="3008152984"
-            />
-          </label>
-
-          <label>
-            Ciudad
-            <input
-              type="text"
-              value={ciudad}
-              onChange={(e) => setCiudad(e.target.value)}
-              placeholder="BOGOTA"
-            />
-          </label>
-
-          <label>
-            Departamento
-            <input
-              type="text"
-              value={departamento}
-              onChange={(e) => setDepartamento(e.target.value)}
-              placeholder="BOGOTA DC"
-            />
-          </label>
-
-          <label>
-            Dirección
-            <input
-              type="text"
-              value={direccion}
-              onChange={(e) => setDireccion(e.target.value)}
-              placeholder="CR 54 No 152a-85"
-            />
-          </label>
-
-          <label>
-            Especialidad
-            <select value={especialidadId} onChange={(e) => setEspecialidadId(e.target.value)}>
-              <option value="">Seleccione uno</option>
-              {especialidades.map(e => (
-                <option key={e.id} value={e.id}>{e.nombre}</option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Especialidades secundarias
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              <button
-                type="button"
-                className="btn-principal"
-                onClick={() => setShowModalEspecialidades(true)}
-              >
-                Editar Especialidades Secundarias ({especialidadesSecundarias.length})
-              </button>
-              {especialidadesSecundarias.length > 0 && (
-                <small style={{ color: '#666' }}>
-                  {especialidadesSecundarias.map(e => e.nombre).join(', ')}
-                </small>
-              )}
-            </div>
-          </label>
-
-          <label>
-            Estado de la cuenta
-            <select value={estadoCuenta} onChange={(e) => setEstadoCuenta(e.target.value)}>
-              <option value="Habilitada">Habilitada</option>
-              <option value="Deshabilitada">Deshabilitada</option>
-              <option value="Suspendida">Suspendida</option>
-            </select>
-          </label>
-
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
-              checked={activo}
-              onChange={(e) => setActivo(e.target.checked)}
-            />
-            Activo
-          </label>
-
-          {modoEdicion ? (
-            <div className="botones-form">
-              <button type="submit" className="btn-guardar">
-                Actualizar
-              </button>
-              <button type="button" className="btn-cancelar" onClick={limpiarFormulario}>
-                Cancelar
-              </button>
-            </div>
-          ) : (
-            <button type="submit" className="btn-guardar">
-              Guardar
-            </button>
-          )}
-        </form>
-      </div>
-
-      {/* TABLA */}
-      <div className="tabla-config">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-          <h3 style={{ margin: 0 }}>Profesionales Registrados</h3>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <div style={{ position: 'relative' }}>
-              <input
-                type="text"
-                placeholder="Buscar profesional..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                style={{
-                  padding: '8px 35px 8px 12px',
-                  borderRadius: '4px',
-                  border: '1px solid #ccc',
-                  width: '250px'
-                }}
-              />
-              <FaSearch style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#999' }} />
-            </div>
-            <button
-              onClick={handleExportExcel}
-              className="btn-excel"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                backgroundColor: '#1d6f42',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                padding: '0 15px',
-                cursor: 'pointer',
-                fontWeight: '600'
-              }}
-            >
-              <FaFileExcel /> Exportar
-            </button>
-          </div>
+    <div className="max-w-7xl mx-auto space-y-6 animate-fadeIn">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-[var(--color-brand-primary)]">Gestión de Profesionales</h1>
+          <p className="text-[var(--color-text-secondary)]">Directorio médico y configuración de especialistas.</p>
         </div>
-        {filteredProfesionales.length === 0 ? (
-          <p>No se encontraron profesionales</p>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Nombre Completo</th>
-                <th>Tipo ID</th>
-                <th>Número ID</th>
-                <th>Especialidad</th>
-                <th>Celular</th>
-                <th>Estado</th>
-                <th>Activo</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredProfesionales.map((prof) => (
-                <tr key={prof.id}>
-                  <td>{prof.nombre_completo}</td>
-                  <td>{prof.tipo_identificacion}</td>
-                  <td>{prof.numero_identificacion}</td>
-                  <td>{prof.especialidad || 'N/A'}</td>
-                  <td>{prof.celular || 'N/A'}</td>
-                  <td>{prof.estado_cuenta}</td>
-                  <td>
-                    {prof.activo ? (
-                      <span className="badge-activo">Activo</span>
-                    ) : (
-                      <span className="badge-inactivo">Inactivo</span>
-                    )}
-                  </td>
-                  <td className="acciones">
-                    <button className="btn-editar" onClick={() => handleEditar(prof)}>
-                      Editar
-                    </button>
-                    <button className="btn-eliminar" onClick={() => handleEliminar(prof.id)}>
-                      Eliminar
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+        <div className="flex gap-2">
+           <Button onClick={handleExportExcel} variant="success" className="flex items-center gap-2">
+             <FaFileExcel /> Exportar
+           </Button>
+        </div>
       </div>
 
-      {/* MODAL ESPECIALIDADES SECUNDARIAS */}
+      {/* Form Card */}
+      <Card title={modoEdicion ? 'Editar Profesional' : 'Nuevo Profesional'} icon={<FaUserPlus />}>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Select
+               label="Prenombre"
+               value={prenombreId}
+               onChange={(e) => setPrenombreId(e.target.value)}
+               options={[{value:'', label:'Seleccione...'}, ...prenombres.map(p => ({value:p.id, label:p.nombre}))]}
+            />
+            <Input
+               label="Nombre *"
+               value={nombre}
+               onChange={(e) => setNombre(e.target.value)}
+               placeholder="Nombres"
+               required
+            />
+            <Input
+               label="Apellidos *"
+               value={apellidos}
+               onChange={(e) => setApellidos(e.target.value)}
+               placeholder="Apellidos"
+               required
+            />
+            <Select
+               label="Tipo Identificación *"
+               value={tipoIdentificacion}
+               onChange={(e) => setTipoIdentificacion(e.target.value)}
+               options={[{value:'', label:'Seleccione...'}, ...tiposIdentificacion.map(t => ({value:t.codigo, label:t.nombre}))]}
+               required
+            />
+            <Input
+               label="Número Identificación *"
+               value={numeroIdentificacion}
+               onChange={(e) => setNumeroIdentificacion(e.target.value)}
+               placeholder="12345678"
+               required
+            />
+            <Input
+               label="NIT"
+               value={nit}
+               onChange={(e) => setNit(e.target.value)}
+            />
+            <Input
+               label="Correo Personal"
+               type="email"
+               value={correo}
+               onChange={(e) => setCorreo(e.target.value)}
+            />
+            <Input
+               label="Celular"
+               type="tel"
+               value={celular}
+               onChange={(e) => setCelular(e.target.value)}
+            />
+            <Input
+               label="Teléfono Fijo"
+               type="tel"
+               value={telefono}
+               onChange={(e) => setTelefono(e.target.value)}
+            />
+            <Input
+               label="Ciudad"
+               value={ciudad}
+               onChange={(e) => setCiudad(e.target.value)}
+            />
+            <Input
+               label="Departamento"
+               value={departamento}
+               onChange={(e) => setDepartamento(e.target.value)}
+            />
+            <Input
+               label="Dirección Residencia"
+               value={direccion}
+               onChange={(e) => setDireccion(e.target.value)}
+            />
+            
+            <div className="lg:col-span-3 border-t border-gray-100 pt-6 mt-2 grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-3 flex items-center gap-2 text-[var(--color-brand-primary)] font-semibold mb-2">
+                 <FaStethoscope /> Información Profesional
+              </div>
+
+               <Select
+                  label="Especialidad Principal"
+                  value={especialidadId}
+                  onChange={(e) => setEspecialidadId(e.target.value)}
+                  options={[{value:'', label:'Seleccione...'}, ...especialidades.map(e => ({value:e.id, label:e.nombre}))]}
+               />
+
+               <Select
+                  label="Estado Cuenta"
+                  value={estadoCuenta}
+                  onChange={(e) => setEstadoCuenta(e.target.value)}
+                  options={[
+                    {value:'Habilitada', label:'Habilitada'},
+                    {value:'Deshabilitada', label:'Deshabilitada'},
+                    {value:'Suspendida', label:'Suspendida'},
+                  ]}
+               />
+               
+               <div className="flex items-center pt-8">
+                 <label className="flex items-center gap-3 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={activo}
+                      onChange={(e) => setActivo(e.target.checked)}
+                      className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-gray-700 font-medium">Profesional Activo en Sistema</span>
+                 </label>
+               </div>
+
+               <div className="lg:col-span-3">
+                 <label className="block text-sm font-medium text-gray-700 mb-2">Especialidades Secundarias</label>
+                 <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <Button type="button" variant="outline" size="sm" onClick={() => setShowModalEspecialidades(true)}>
+                      Administrar ({especialidadesSecundarias.length})
+                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                       {especialidadesSecundarias.length > 0 ? (
+                         especialidadesSecundarias.map(e => <Badge key={e.id} size="sm">{e.nombre}</Badge>)
+                       ) : (
+                         <span className="text-sm text-gray-400 italic">No hay asignadas.</span>
+                       )}
+                    </div>
+                 </div>
+               </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
+             {modoEdicion && (
+               <Button type="button" variant="ghost" onClick={limpiarFormulario}>
+                 Cancelar Edición
+               </Button>
+             )}
+             <Button type="submit" variant={modoEdicion ? 'secondary' : 'primary'}>
+               {modoEdicion ? 'Actualizar Profesional' : 'Guardar Profesional'}
+             </Button>
+          </div>
+        </form>
+      </Card>
+
+      {/* Table Card */}
+      <Card className="overflow-hidden">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+           <h3 className="font-bold text-lg text-gray-800">Listado de Profesionales</h3>
+           <div className="w-full sm:w-72">
+             <Input
+               placeholder="Buscar profesional..."
+               icon={<FaSearch />}
+               value={searchTerm}
+               onChange={(e) => setSearchTerm(e.target.value)}
+             />
+           </div>
+        </div>
+        <Table
+           columns={columns}
+           data={filteredProfesionales}
+           emptyMessage="No se encontraron profesionales registrados."
+        />
+      </Card>
+      
+      {/* Modal is external, we keep it as is since it likely uses specific internal logic. 
+          If looking inconsistent, we can refactor later. */}
       <ModalEspecialidades
         open={showModalEspecialidades}
         especialidades={especialidades}

@@ -2,8 +2,8 @@
 
 from app.database import especialidades_repo
 
-def listar_especialidades(solo_activos: bool = False):
-    return {"data": especialidades_repo.listar_especialidades(solo_activos)}
+def listar_especialidades(solo_activos: bool = False, solo_autogestion: bool = False):
+    return {"data": especialidades_repo.listar_especialidades(solo_activos, solo_autogestion)}
 
 def obtener_especialidad_by_id(especialidad_id: int):
     row = especialidades_repo.obtener_especialidad(especialidad_id)
@@ -13,7 +13,8 @@ def obtener_especialidad_by_id(especialidad_id: int):
         "id": row[0],
         "codigo": row[1],
         "nombre": row[2],
-        "activo": row[3]
+        "activo": row[3],
+        "es_autogestion": row[4]
     }
 
 def crear_especialidad(data: dict):

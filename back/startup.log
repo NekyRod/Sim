@@ -1,0 +1,10 @@
+INFO:     Will watch for changes in these directories: ['D:\\OneDrive\\Desarr\\Proyectos\\GOI\\back']
+INFO:     Uvicorn running on http://127.0.0.1:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [1528] using WatchFiles
+LOADING SETTINGS ROUTES MODULE
+SUCCESSFULLY IMPORTED SETTINGS ROUTES
+--- INCLUDING SETTINGS ROUTER ---
+INFO:     Started server process [19228]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app\routes\settings_routes.py'. Reloading...

@@ -31,10 +31,15 @@ def init_jwt_secret_if_needed(plain_secret: str):
 
 def load_jwt_secret() -> str:
     """
-    Lee jwt.conf, lo desencripta y devuelve el secret en texto plano.
+    Si existe la variable de entorno JWT_SECRET, la usa directamente.
+    Si no, lee jwt.conf, lo desencripta y devuelve el secret en texto plano.
     """
+    env_secret = os.getenv("JWT_SECRET")
+    if env_secret:
+        return env_secret
+        
     if not os.path.exists(CONF_PATH):
-        raise RuntimeError("jwt.conf no existe; ejecuta init_jwt_secret_if_needed primero")
+        raise RuntimeError("jwt.conf no existe; ejecuta init_jwt_secret_if_needed primero o define JWT_SECRET")
 
     with open(CONF_PATH, "rb") as f:
         token = f.read()

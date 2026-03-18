@@ -1,24 +1,27 @@
 // src/pages/config/Especialidades.jsx
 
 import { useState, useEffect, useMemo } from 'react';
-import { FaTags, FaSearch, FaFileExcel } from 'react-icons/fa';
+import { FaSearch, FaFileExcel, FaEdit, FaTrash } from 'react-icons/fa';
 import { apiFetch } from '../../api/client';
 import { showToast, showConfirm } from '../../utils/ui';
 import { exportToExcel } from '../../utils/excel';
+import { Card, Input, Button, Badge, Table, TableSkeleton } from '../../components/ui';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 export default function Especialidades() {
   const [especialidades, setEspecialidades] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [guardando, setGuardando] = useState(false);
   const [modoEdicion, setModoEdicion] = useState(false);
   const [especialidadEditando, setEspecialidadEditando] = useState(null);
 
   const [codigo, setCodigo] = useState('');
   const [nombre, setNombre] = useState('');
   const [activo, setActivo] = useState(true);
+  const [esAutogestion, setEsAutogestion] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [errors, setErrors] = useState({});
 
   const filteredEspecialidades = useMemo(() => {
     if (!searchTerm) return especialidades;
@@ -38,7 +41,8 @@ export default function Especialidades() {
     const dataToExport = filteredEspecialidades.map(e => ({
       'Código': e.codigo,
       'Nombre': e.nombre,
-      'Activo': e.activo ? 'Sí' : 'No'
+      'Activo': e.activo ? 'Sí' : 'No',
+      'Autogestión': e.es_autogestion ? 'Sí' : 'No'
     }));
 
     exportToExcel(dataToExport, 'Especialidades.xlsx', 'Especialidades');
@@ -54,10 +58,8 @@ export default function Especialidades() {
     try {
       const resp = await apiFetch(`${BACKEND_URL}/especialidades/`);
       setEspecialidades(resp.data || []);
-      setError(null);
     } catch (err) {
-      setError('Error al cargar especialidades');
-      console.error(err);
+      showToast('Error al cargar especialidades', 'error');
     } finally {
       setLoading(false);
     }
@@ -65,14 +67,17 @@ export default function Especialidades() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setErrors({});
 
     const datos = {
       codigo: codigo.toUpperCase(),
       nombre,
-      activo
+      activo,
+      es_autogestion: esAutogestion
     };
 
     try {
+      setGuardando(true);
       if (modoEdicion && especialidadEditando) {
         await apiFetch(`${BACKEND_URL}/especialidades/${especialidadEditando.id}`, {
           method: 'PUT',
@@ -90,8 +95,10 @@ export default function Especialidades() {
       limpiarFormulario();
       cargarEspecialidades();
     } catch (err) {
-      console.error('Error al guardar:', err);
       showToast('Error al guardar la especialidad', 'error');
+      setErrors({ general: err.message });
+    } finally {
+      setGuardando(false);
     }
   }
 
@@ -101,6 +108,7 @@ export default function Especialidades() {
     setCodigo(especialidad.codigo);
     setNombre(especialidad.nombre);
     setActivo(especialidad.activo);
+    setEsAutogestion(especialidad.es_autogestion || false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -113,7 +121,6 @@ export default function Especialidades() {
       showToast('Especialidad eliminada correctamente');
       cargarEspecialidades();
     } catch (err) {
-      console.error('Error al eliminar:', err);
       showToast('Error al eliminar la especialidad', 'error');
     }
   }
@@ -122,151 +129,182 @@ export default function Especialidades() {
     setCodigo('');
     setNombre('');
     setActivo(true);
+    setEsAutogestion(false);
     setModoEdicion(false);
     setEspecialidadEditando(null);
+    setErrors({});
   }
 
-  if (loading) return <div className="cargando">Cargando especialidades...</div>;
-  if (error) return <div className="error-mensaje">{error}</div>;
+  const columns = [
+    { 
+      key: 'codigo', 
+      label: 'Código',
+      render: (val) => <span className="font-semibold text-[var(--color-brand-primary)]">{val}</span>
+    },
+    { key: 'nombre', label: 'Nombre' },
+    { 
+      key: 'es_autogestion', 
+      label: 'Autogestión',
+      render: (val) => (
+        <Badge variant={val ? 'info' : 'neutral'}>
+          {val ? 'Habilitada' : 'No'}
+        </Badge>
+      )
+    },
+    { 
+      key: 'activo', 
+      label: 'Estado',
+      render: (val) => (
+        <Badge variant={val ? 'success' : 'neutral'}>
+          {val ? 'Activo' : 'Inactivo'}
+        </Badge>
+      )
+    },
+    {
+      key: 'acciones',
+      label: 'Acciones',
+      render: (_, row) => (
+        <div className="flex gap-2">
+          <Button 
+            size="sm" 
+            variant="ghost" 
+            onClick={() => handleEditar(row)}
+            className="text-[var(--color-brand-primary)]"
+          >
+            <FaEdit className="mr-1" /> Editar
+          </Button>
+          <Button 
+            size="sm" 
+            variant="ghost" 
+            onClick={() => handleEliminar(row.id)}
+            className="text-[var(--color-status-danger)]"
+          >
+            <FaTrash className="mr-1" /> Eliminar
+          </Button>
+        </div>
+      )
+    }
+  ];
 
   return (
-    <div className="pagina-config">
-      <h2>
-        <FaTags /> Gestión de Especialidades
-      </h2>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-[var(--color-brand-primary)]">
+          Gestión de Especialidades
+        </h1>
+        <p className="text-[var(--color-text-secondary)] mt-1">
+          Administra las especialidades odontológicas del sistema
+        </p>
+      </div>
 
-      {/* FORMULARIO */}
-      <div className="formulario-config">
-        <h3>{modoEdicion ? 'Editar Especialidad' : 'Nueva Especialidad'}</h3>
-        <form onSubmit={handleSubmit}>
-          <label>
-            Código (ej: ENDO, ORTO) *
-            <input
-              type="text"
+      {/* Form Card */}
+      <Card title={modoEdicion ? 'Editar Especialidad' : 'Nueva Especialidad'}>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Código"
               value={codigo}
               onChange={(e) => setCodigo(e.target.value)}
-              placeholder="ENDO"
-              required
+              placeholder="Ej: ENDO"
+              helper="Código único de la especialidad"
+              error={errors.codigo}
               maxLength={20}
+              required
             />
-          </label>
 
-          <label>
-            Nombre *
-            <input
-              type="text"
+            <Input
+              label="Nombre"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
-              placeholder="Endodoncia"
-              required
+              placeholder="Ej: Endodoncia"
+              helper="Nombre descriptivo de la especialidad"
+              error={errors.nombre}
               maxLength={200}
+              required
             />
-          </label>
+          </div>
 
-          <label className="checkbox-label">
+          <div className="flex items-center gap-2">
             <input
               type="checkbox"
+              id="activo"
               checked={activo}
               onChange={(e) => setActivo(e.target.checked)}
+              className="w-4 h-4 text-[var(--color-brand-primary)] border-[var(--color-border-primary)] rounded focus:ring-[var(--color-brand-primary)]"
             />
-            Activo
-          </label>
-
-          {modoEdicion ? (
-            <div className="botones-form">
-              <button type="submit" className="btn-guardar">
-                Actualizar
-              </button>
-              <button type="button" className="btn-cancelar" onClick={limpiarFormulario}>
-                Cancelar
-              </button>
-            </div>
-          ) : (
-            <button type="submit" className="btn-guardar">
-              Guardar
-            </button>
-          )}
-        </form>
-      </div>
-
-      {/* TABLA */}
-      <div className="tabla-config">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-          <h3 style={{ margin: 0 }}>Especialidades Registradas</h3>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <div style={{ position: 'relative' }}>
-              <input
-                type="text"
-                placeholder="Buscar especialidad..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                style={{
-                  padding: '8px 35px 8px 12px',
-                  borderRadius: '4px',
-                  border: '1px solid #ccc',
-                  width: '250px'
-                }}
-              />
-              <FaSearch style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#999' }} />
-            </div>
-            <button
-              onClick={handleExportExcel}
-              className="btn-excel"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                backgroundColor: '#1d6f42',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                padding: '0 15px',
-                cursor: 'pointer',
-                fontWeight: '600'
-              }}
-            >
-              <FaFileExcel /> Exportar
-            </button>
+            <label htmlFor="activo" className="text-sm font-medium text-[var(--color-text-primary)]">
+              Activo
+            </label>
           </div>
-        </div>
-        {filteredEspecialidades.length === 0 ? (
-          <p>No se encontraron especialidades</p>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="es_autogestion"
+              checked={esAutogestion}
+              onChange={(e) => setEsAutogestion(e.target.checked)}
+              className="w-4 h-4 text-[var(--color-brand-primary)] border-[var(--color-border-primary)] rounded focus:ring-[var(--color-brand-primary)]"
+            />
+            <label htmlFor="es_autogestion" className="text-sm font-medium text-[var(--color-text-primary)]">
+              Permitir Autogestión en Chatbot
+            </label>
+          </div>
+
+          {errors.general && (
+            <div className="p-3 bg-[var(--color-status-danger-bg)] border border-[var(--color-status-danger-border)] rounded-[var(--radius-md)] text-[var(--color-status-danger)] text-sm">
+              {errors.general}
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-4">
+            <Button type="submit" variant="primary" loading={guardando}>
+              {modoEdicion ? 'Actualizar' : 'Crear'}
+            </Button>
+            {modoEdicion && (
+              <Button type="button" variant="ghost" onClick={limpiarFormulario}>
+                Cancelar
+              </Button>
+            )}
+          </div>
+        </form>
+      </Card>
+
+      {/* Table Card */}
+      <Card 
+        title="Listado de Especialidades"
+        header={
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
+              Listado de Especialidades
+            </h3>
+            <div className="flex gap-3">
+              <div className="relative">
+                <Input
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Buscar especialidad..."
+                  className="w-64"
+                />
+                <FaSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
+              </div>
+              <Button variant="secondary" onClick={handleExportExcel}>
+                <FaFileExcel className="mr-2" /> Exportar
+              </Button>
+            </div>
+          </div>
+        }
+      >
+        {loading ? (
+          <TableSkeleton rows={5} columns={4} />
         ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Código</th>
-                <th>Nombre</th>
-                <th>Activo</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredEspecialidades.map((especialidad) => (
-                <tr key={especialidad.id}>
-                  <td>{especialidad.codigo}</td>
-                  <td>{especialidad.nombre}</td>
-                  <td>
-                    {especialidad.activo ? (
-                      <span className="badge-activo">Activo</span>
-                    ) : (
-                      <span className="badge-inactivo">Inactivo</span>
-                    )}
-                  </td>
-                  <td className="acciones">
-                    <button className="btn-editar" onClick={() => handleEditar(especialidad)}>
-                      Editar
-                    </button>
-                    <button className="btn-eliminar" onClick={() => handleEliminar(especialidad.id)}>
-                      Eliminar
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <Table
+            columns={columns}
+            data={filteredEspecialidades}
+            emptyMessage="No se encontraron especialidades. Crea la primera usando el formulario superior."
+          />
         )}
-      </div>
+      </Card>
     </div>
   );
 }

@@ -1,0 +1,20 @@
+# ── Frontend React+Vite (Desarrollo) ─────────────────
+# Node Alpine con Vite dev server para HMR instantáneo
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Instalar dependencias (cacheadas como layer)
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+# NO se copia src/: se monta como volumen para hot-reload
+# Copiar archivos de configuración que Vite necesita
+COPY vite.config.js ./
+COPY eslint.config.js ./
+COPY index.html ./
+
+EXPOSE 5173
+
+# Vite dev server escuchando en todas las interfaces
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

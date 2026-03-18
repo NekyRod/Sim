@@ -1,0 +1,20 @@
+Columns:
+id (integer) - Nullable: NO
+nombre_completo (character varying) - Nullable: NO
+nombre (character varying) - Nullable: YES
+apellidos (character varying) - Nullable: YES
+prenombre_id (integer) - Nullable: YES
+tipo_identificacion (character varying) - Nullable: YES
+numero_identificacion (character varying) - Nullable: YES
+nit (character varying) - Nullable: YES
+correo (character varying) - Nullable: YES
+celular (character varying) - Nullable: YES
+telefono (character varying) - Nullable: YES
+ciudad (character varying) - Nullable: YES
+departamento (character varying) - Nullable: YES
+direccion (text) - Nullable: YES
+especialidad (character varying) - Nullable: YES
+especialidad_id (integer) - Nullable: YES
+estado_cuenta (character varying) - Nullable: YES
+activo (boolean) - Nullable: YES
+updated_at (timestamp without time zone) - Nullable: YES

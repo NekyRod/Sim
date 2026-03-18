@@ -62,7 +62,8 @@ def get_citas_profesional_rango(profesional_id: int, fecha_inicio: date, fecha_f
                     p.nombre_acompanante,
                     c.motivo_cita,
                     c.profesional_id,
-                    c.tipo_servicio
+                    c.tipo_servicio,
+                    c.estado
                 FROM citas c
                 JOIN pacientes p ON c.paciente_id = p.id
                 LEFT JOIN especialidades e ON c.motivo_cita = e.codigo
@@ -99,7 +100,8 @@ def get_citas_profesional_rango(profesional_id: int, fecha_inicio: date, fecha_f
                     "nombre_acompanante": r[12],
                     "motivo_codigo": r[13],
                     "profesional_id": r[14],
-                    "tipo_servicio": r[15]
+                    "tipo_servicio": r[15],
+                    "estado": r[16]
                 }
                 for r in rows
             ]
@@ -303,5 +305,95 @@ def delete_cita(cita_id: int) -> int:
                 WHERE id = %s
             """, (cita_id,))
             return cur.rowcount
+    finally:
+        conn.close()
+
+def cancelar_cita_repo(cita_id: int, cancelado_por_nombre: str, cancelado_por_documento: str, cancelado_motivo: str) -> int:
+    """
+    Cancela una cita guardando detalles de quién cancela y el motivo.
+    """
+    conn = get_db_connection()
+    try:
+        with conn, conn.cursor() as cur:
+            cur.execute("""
+                UPDATE citas
+                SET 
+                    estado = 'CANCELADA',
+                    activo = FALSE,
+                    cancelado_por_nombre = %s,
+                    cancelado_por_documento = %s,
+                    cancelado_motivo = %s,
+                    fecha_cancelacion = NOW(),
+                    updated_at = NOW()
+                WHERE id = %s
+            """, (cancelado_por_nombre, cancelado_por_documento, cancelado_motivo, cita_id))
+            return cur.rowcount
+    finally:
+        conn.close()
+
+def update_cita_observacion(cita_id: int, observacion: str) -> int:
+    """
+    Actualizar la observación de una cita (Historia Clínica).
+    """
+    conn = get_db_connection()
+    try:
+        with conn, conn.cursor() as cur:
+            cur.execute("""
+                UPDATE citas
+                SET observacion = %s, updated_at = NOW()
+                WHERE id = %s
+            """, (observacion, cita_id))
+            return cur.rowcount
+    finally:
+        conn.close()
+
+def get_citas_paciente(paciente_id: int):
+    """
+    Obtener todas las citas activas de un paciente.
+    """
+    conn = get_db_connection()
+    try:
+        with conn, conn.cursor() as cur:
+            cur.execute("""
+                SELECT 
+                    c.id,
+                    c.paciente_id,
+                    p.nombre_completo AS nombre_paciente,
+                    p.numero_identificacion,
+                    c.profesional_id,
+                    c.fecha_programacion,
+                    c.fecha_solicitada,
+                    c.hora,
+                    c.tipo_servicio,
+                    c.tipo_pbs,
+                    c.mas_6_meses,
+                    c.motivo_cita,
+                    c.observacion,
+                    c.estado,
+                    c.created_at,
+                    pr.nombre as prof_nombre,
+                    pr.apellidos as prof_apellidos,
+                    e.nombre as especialidad_nombre
+                FROM citas c
+                INNER JOIN pacientes p ON c.paciente_id = p.id
+                INNER JOIN profesionales pr ON c.profesional_id = pr.id
+                LEFT JOIN especialidades e ON c.motivo_cita = e.codigo
+                WHERE c.paciente_id = %s
+                  AND c.activo = TRUE
+                  AND c.estado != 'CANCELADA'
+                ORDER BY c.fecha_programacion, c.hora
+            """, (paciente_id,))
+            rows = cur.fetchall()
+            return [
+                {
+                    "id": r[0],
+                    "fecha_programacion": str(r[5]),
+                    "hora": str(r[7]),
+                    "profesional_nombre": f"{r[15]} {r[16]}",
+                    "especialidad": r[17] or "General",
+                    "estado": r[13]
+                }
+                for r in rows
+            ]
     finally:
         conn.close()

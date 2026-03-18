@@ -17,7 +17,7 @@ function toAmPm(time) {
   return `${hh}:${m} ${suf}`;
 }
 
-export default function ModalBloquearRango({ open, profesional, fecha, appointments = [], onClose, onModifyAppointment }) {
+export default function ModalBloquearRango({ open, profesional, fecha, appointments = [], onClose, onModifyAppointment, onRefresh }) {
   const [desde, setDesde] = useState('');
   const [hasta, setHasta] = useState('');
   const [descripcion, setDescripcion] = useState('');
@@ -86,6 +86,7 @@ export default function ModalBloquearRango({ open, profesional, fecha, appointme
       setHasta('');
       setDescripcion('');
       cargarBloqueos();
+      if (onRefresh) onRefresh();
     } catch (err) {
       showToast('Error al bloquear rango.', 'error');
     } finally {
@@ -98,6 +99,7 @@ export default function ModalBloquearRango({ open, profesional, fecha, appointme
       await apiFetch(`${BACKEND_URL}/rangos-bloqueados/${id}`, { method: 'DELETE' });
       showToast('Bloqueo eliminado.');
       cargarBloqueos();
+      if (onRefresh) onRefresh();
     } catch (err) {
       showToast('Error al eliminar bloqueo.', 'error');
     }
@@ -215,7 +217,7 @@ export default function ModalBloquearRango({ open, profesional, fecha, appointme
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .rango-inputs-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;

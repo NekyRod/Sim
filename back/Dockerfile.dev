@@ -1,0 +1,27 @@
+# ── Backend API (Desarrollo) ─────────────────────────
+# Imagen Alpine ligera con deps para psycopg2 y bcrypt
+FROM python:3.12-alpine
+
+# Deps de compilación: gcc/musl-dev para C extensions,
+# libpq-dev para psycopg2, libffi-dev para bcrypt/cffi
+RUN apk add --no-cache \
+    gcc \
+    musl-dev \
+    libpq-dev \
+    libffi-dev \
+    && rm -rf /var/cache/apk/*
+
+WORKDIR /app
+
+# Instalar dependencias Python (cacheadas como layer)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# NO se copia el código: se monta como volumen para hot-reload
+# Crear directorio de config que el app espera
+RUN mkdir -p /app/app/config
+
+EXPOSE 8001
+
+# Uvicorn con --reload para detectar cambios en el código montado
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001", "--reload"]

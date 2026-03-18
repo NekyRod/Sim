@@ -1,6 +1,6 @@
 # app/routes/profesionales_routes.py
 
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, status, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List
 from app.control import profesionales_control
@@ -34,6 +34,22 @@ class ProfesionalRequest(BaseModel):
 @router.get("/")
 def listar():
     return profesionales_control.listar_profesionales()
+
+@router.get("/me")
+def obtener_mi_perfil(token_payload: dict = Depends(get_current_user_token)):
+    """
+    Retorna el perfil del profesional vinculado al usuario de la sesión activa.
+    Busca por numero_identificacion o correo usando el 'sub' (username) del JWT.
+    """
+    username = token_payload.get("sub")
+    profesional = profesionales_control.obtener_profesional_por_identificacion(username)
+    if not profesional:
+         # Si no se encuentra vinculación, retornamos un error informativo o el admin por defecto
+         raise HTTPException(
+             status_code=status.HTTP_404_NOT_FOUND,
+             detail=f"No se encontró un perfil profesional vinculado al usuario '{username}'"
+         )
+    return profesional
 
 @router.get("/{profesional_id}")
 def obtener(profesional_id: int):

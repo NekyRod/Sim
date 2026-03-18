@@ -1,0 +1,103 @@
+# =============================================================================
+# GOI SIM-ODONT — Docker Compose (Production — Pre-built Images)
+# =============================================================================
+# Este archivo NO requiere código fuente. Usa imágenes pre-construidas.
+#
+# Uso:
+#   1. Cargar imágenes:  docker load -i goi-images.tar
+#   2. Copiar .env:      cp .env.example .env  (y llenar valores)
+#   3. Levantar:         docker compose -f docker-compose.images.yml up -d
+#   4. Logs:             docker compose -f docker-compose.images.yml logs -f
+#   5. Detener:          docker compose -f docker-compose.images.yml down
+# =============================================================================
+
+services:
+  # ── PostgreSQL Database ──────────────────────────────
+  db:
+    image: postgres:15-alpine
+    container_name: goi-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sim
+      POSTGRES_USER: admiSim
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/sim_full_dump.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admiSim -d sim"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - wolfmedic-net
+
+  # ── Auth Service (Internal — behind Nginx) ──────────
+  auth:
+    image: goi-auth:latest
+    container_name: goi-auth
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: sim
+      POSTGRES_USER: admiSim
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PORT: 5432
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_FERNET_KEY: ${JWT_FERNET_KEY}
+      ALGORITHM: HS256
+      AUTH_SERVICE_URL: http://auth:8000
+      TOKEN_URL: http://auth:8000/auth/token
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      LOG_LEVEL: ${LOG_LEVEL:-WARNING}
+    networks:
+      - wolfmedic-net
+
+  # ── Backend API (Internal — behind Nginx) ───────────
+  backend:
+    image: goi-backend:latest
+    container_name: goi-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: sim
+      POSTGRES_USER: admiSim
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PORT: 5432
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_FERNET_KEY: ${JWT_FERNET_KEY}
+      ALGORITHM: HS256
+      AUTH_SERVICE_URL: http://auth:8000
+      TOKEN_URL: http://auth:8000/auth/token
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      LOG_LEVEL: ${LOG_LEVEL:-WARNING}
+    networks:
+      - wolfmedic-net
+
+  # ── Frontend + Nginx Reverse Proxy (Port 80) ────────
+  frontend:
+    image: goi-frontend:latest
+    container_name: goi-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - auth
+    ports:
+      - "80:80"
+    networks:
+      - wolfmedic-net
+
+volumes:
+  pgdata:
+    driver: local
+
+networks:
+  wolfmedic-net:
+    driver: bridge

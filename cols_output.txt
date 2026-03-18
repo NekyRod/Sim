@@ -1,0 +1,1 @@
+CONNECTION ERROR: UnicodeDecodeError('utf-8', b'connection to server at "localhost" (::1), port 5432 failed: FATAL:  la autentificaci\xf3n password fall\xf3 para el usuario \xabpostgres\xbb\n', 85, 86, 'invalid continuation byte')

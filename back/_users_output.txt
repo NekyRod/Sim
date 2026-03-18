@@ -1,0 +1,2 @@
+ID=1 | user=admin | hash=$2b$12$MCO25d3w4w6Io95hReL.AO0SrgB.z55TAwA8tprTaNfdAje4PqHEq | rol=ADMIN | activo=True | role=Administrador
+ID=10 | user=david.rodriguez | hash=$2b$12$5XmRjBVXxnlAlWFdl3tN/OuD27EtWoilokdPMKP6o4ig0I5z3vxqO | rol=Profesional  | activo=True | role=Profesional 

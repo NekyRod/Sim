@@ -1,11 +1,10 @@
-// src/pages/AgendaSemanal.jsx
 import { useState, useEffect, useMemo } from 'react';
 import { apiFetch } from '../api/client';
 import { showToast } from '../utils/ui';
-import { FaCalendarWeek, FaChevronLeft, FaChevronRight, FaFileExcel, FaUserMd, FaInfoCircle } from 'react-icons/fa';
+import { FaCalendarWeek, FaChevronLeft, FaChevronRight, FaFileExcel, FaUserMd, FaInfoCircle, FaClock, FaCalendarDay } from 'react-icons/fa';
 import { exportToExcel } from '../utils/excel';
-import ModalBase from '../components/ModalBase';
-import '../styles/estilos.css';
+import { Card, Select, Button, Badge } from '../components/ui';
+import ModalBase from '../components/ModalBase'; // Maintaining existing modal for detail view simplicity
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -16,15 +15,13 @@ const monthNames = [
 
 const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
-// Función para obtener el lunes de la semana de una fecha dada
 const getMonday = (d) => {
   const date = new Date(d);
   const day = date.getDay();
-  const diff = date.getDate() - day + (day === 0 ? -6 : 1); // ajustar si es domingo
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
   return new Date(date.setDate(diff));
 };
 
-// Generar slots de tiempo (de 6:00 AM a 8:00 PM cada 20 min)
 const generateTimeSlots = () => {
   const slots = [];
   let start = 6 * 60 + 0; // 6:00 AM
@@ -43,11 +40,8 @@ const generateTimeSlots = () => {
       return `${h12}:${mm.toString().padStart(2, '0')} ${ampm}`;
     };
 
-    const timeStr = formatTime(h, m);
-    const timeEndStr = formatTime(hFin, mFin);
-
     slots.push({ 
-      label: `${timeStr} - ${timeEndStr}`, 
+      label: `${formatTime(h, m)} - ${formatTime(hFin, mFin)}`, 
       start: `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`,
       end: `${hFin.toString().padStart(2, '0')}:${mFin.toString().padStart(2, '0')}`
     });
@@ -77,8 +71,6 @@ export default function AgendaSemanal() {
     for (let i = 0; i < 6; i++) {
       const d = new Date(currentDate);
       d.setDate(currentDate.getDate() + i);
-      
-      // Formatear fecha localmente YYYY-MM-DD para evitar problemas de zona horaria
       const y = d.getFullYear();
       const m = String(d.getMonth() + 1).padStart(2, '0');
       const dayNum = String(d.getDate()).padStart(2, '0');
@@ -87,7 +79,8 @@ export default function AgendaSemanal() {
       days.push({
         name: dayNames[i],
         number: d.getDate(),
-        fullDate: fullDate
+        fullDate: fullDate,
+        isToday: fullDate === new Date().toISOString().split('T')[0]
       });
     }
     return days;
@@ -103,11 +96,9 @@ export default function AgendaSemanal() {
 
   async function cargarProfesionales() {
     try {
-      const resp = await apiFetch(`${BACKEND_URL}/profesionales`);
+      const resp = await apiFetch(`${BACKEND_URL}/profesionales/`);
       setProfesionales(resp.data || []);
-    } catch (err) {
-      console.error('Error cargando profesionales', err);
-    }
+    } catch (err) { console.error(err); }
   }
 
   async function cargarCitas() {
@@ -131,28 +122,10 @@ export default function AgendaSemanal() {
     setCurrentDate(newDate);
   };
 
-  const handleYearChange = (e) => {
-    const newDate = new Date(currentDate);
-    newDate.setFullYear(parseInt(e.target.value));
-    setCurrentDate(getMonday(newDate));
-  };
-
-  const handleMonthChange = (e) => {
-    const newDate = new Date(currentDate);
-    newDate.setMonth(parseInt(e.target.value));
-    // Al cambiar mes, intentamos ir al primer lunes de ese mes
-    const firstOfMonth = new Date(newDate.getFullYear(), newDate.getMonth(), 1);
-    setCurrentDate(getMonday(firstOfMonth));
-  };
-
   const timeSlots = useMemo(() => generateTimeSlots(), []);
 
   const handleExportExcel = () => {
-    if (citas.length === 0) {
-      showToast('No hay citas para exportar', 'error');
-      return;
-    }
-
+    if (citas.length === 0) return showToast('No hay citas para exportar', 'error');
     const dataToExport = citas.map(cita => ({
       'Fecha': cita.fecha,
       'Hora': `${cita.hora} - ${cita.hora_fin || ''}`,
@@ -161,146 +134,143 @@ export default function AgendaSemanal() {
       'Motivo': cita.motivo,
       'Profesional': cita.profesional
     }));
-
-    const fileName = `Agenda_Semanal_${weekDays[0].fullDate}_al_${weekDays[5].fullDate}.xlsx`;
-    exportToExcel(dataToExport, fileName, 'Agenda Semanal');
-    showToast('Archivo Excel generado correctamente');
+    exportToExcel(dataToExport, `Agenda_Semanal_${weekDays[0].fullDate}.xlsx`, 'Agenda Semanal');
   };
 
   return (
-    <div className="agenda-semanal-container-full">
-      <div className="agenda-semanal-header-filtros">
-        <div className="filtros-top">
-          <div className="filtro-item">
-            <label>Año</label>
-            <select value={year} onChange={handleYearChange}>
-              {years.map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
-          </div>
-          <div className="filtro-item">
-            <label>Mes</label>
-            <select value={month} onChange={handleMonthChange}>
-              {monthNames.map((m, i) => <option key={i} value={i}>{m}</option>)}
-            </select>
-          </div>
-          <div className="filtro-item" style={{ flex: 1 }}>
-            <label>Profesional</label>
-            <select value={profesionalId} onChange={(e) => setProfesionalId(e.target.value)}>
-              <option value="0">-- Todos los profesionales --</option>
-              {profesionales.map(p => (
-                <option key={p.id} value={p.id}>{p.nombre_completo}</option>
-              ))}
-            </select>
-          </div>
-          <button onClick={handleExportExcel} className="btn-excel" style={{ alignSelf: 'flex-end', height: '38px' }}>
-            <FaFileExcel /> Descargar a Excel
-          </button>
+    <div className="max-w-[1800px] mx-auto space-y-4 animate-fadeIn">
+      {/* Header & Controls */}
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-[var(--color-brand-primary)]">Agenda Semanal</h1>
+          <p className="text-[var(--color-text-secondary)]">Vista general de la semana por intervalos.</p>
         </div>
+        
+        <div className="flex flex-wrap items-center gap-3">
+           <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-gray-200 shadow-sm">
+             <Button variant="ghost" size="sm" onClick={() => navigateWeek(-1)}><FaChevronLeft/></Button>
+             <span className="font-semibold text-gray-700 min-w-[280px] text-center">
+                {weekDays[0].number} {monthNames[new Date(weekDays[0].fullDate).getMonth()]} - {weekDays[5].number} {monthNames[new Date(weekDays[5].fullDate).getMonth()]} {year}
+             </span>
+             <Button variant="ghost" size="sm" onClick={() => navigateWeek(1)}><FaChevronRight/></Button>
+           </div>
+           
+           <div className="w-64">
+             <Select
+                value={profesionalId}
+                onChange={(e) => setProfesionalId(e.target.value)}
+                options={[{value:'0', label:'Todos los profesionales'}, ...profesionales.map(p => ({value:p.id, label:p.nombre_completo}))]}
+                className="!mb-0"
+             />
+           </div>
 
-        <div className="semana-navegacion">
-          <button onClick={() => navigateWeek(-1)} className="nav-arrow"><FaChevronLeft /></button>
-          <div className="semana-info">
-            Semana del {weekDays[0].number} de {monthNames[new Date(weekDays[0].fullDate).getMonth()]} al {weekDays[5].number} de {monthNames[new Date(weekDays[5].fullDate).getMonth()]}
-          </div>
-          <button onClick={() => navigateWeek(1)} className="nav-arrow"><FaChevronRight /></button>
+           <Button onClick={handleExportExcel} variant="success" className="flex items-center gap-2">
+              <FaFileExcel /> Excel
+           </Button>
         </div>
       </div>
 
-      <div className="agenda-semanal-grid-wrapper">
-        <table className="agenda-semanal-grid">
-          <thead>
-            <tr>
-              <th className="col-hora">Hora</th>
-              {weekDays.map(day => (
-                <th key={day.fullDate} className="col-dia">
-                  <div className="dia-nombre">{day.name}</div>
-                  <div className="dia-numero">{day.number}</div>
+      {/* Grid */}
+      <Card className="overflow-x-auto p-0">
+        <div className="min-w-[1000px]">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                <th className="sticky left-0 z-10 bg-gray-50 border-b border-r border-gray-200 p-3 w-32 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">
+                  Hora
                 </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {timeSlots.map(slot => (
-              <tr key={slot.start}>
-                <td className="slot-hora">{slot.label}</td>
-                {weekDays.map(day => {
-                  const citasEnSlot = citas.filter(c => {
-                    // Normalizar horas para comparar HH:MM (manejando posibles formatos H:MM o HH:MM:SS)
-                    if (!c.hora) return false;
-                    const [h, m] = c.hora.split(':');
-                    const citaHoraNorm = `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
-                    const slotHoraNorm = slot.start; // Ya viene como HH:MM desde generateTimeSlots
-                    
-                    return c.fecha === day.fullDate && citaHoraNorm === slotHoraNorm;
-                  });
-
-                  return (
-                    <td key={day.fullDate} className="slot-dia">
-                      {citasEnSlot.map(cita => (
-                        <div 
-                          key={cita.id} 
-                          className="cita-card-semanal"
-                          onClick={() => setSelectedCita(cita)}
-                          title="Ver detalle"
-                        >
-                          <div className="cita-profesional-text">
-                            <FaUserMd size={10} style={{ marginRight: '4px' }} />
-                            {cita.profesional}
-                          </div>
-                        </div>
-                      ))}
-                    </td>
-                  );
-                })}
+                {weekDays.map(day => (
+                  <th key={day.fullDate} className={`border-b border-r border-gray-200 p-3 text-center min-w-[160px] ${day.isToday ? 'bg-blue-50' : 'bg-white'}`}>
+                    <div className={`text-sm font-bold ${day.isToday ? 'text-blue-700' : 'text-gray-700'}`}>{day.name}</div>
+                    <div className={`text-2xl font-light ${day.isToday ? 'text-blue-600' : 'text-gray-400'}`}>{day.number}</div>
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {timeSlots.map(slot => (
+                <tr key={slot.start} className="group hover:bg-gray-50/50 transition-colors">
+                  <td className="sticky left-0 bg-white group-hover:bg-gray-50/50 border-r border-gray-200 p-2 text-xs text-gray-400 font-mono text-center align-top pt-3">
+                    {slot.label}
+                  </td>
+                  {weekDays.map(day => {
+                    const citasEnSlot = citas.filter(c => {
+                      if (!c.hora) return false;
+                      const [h, m] = c.hora.split(':');
+                      return c.fecha === day.fullDate && `${h.padStart(2,'0')}:${m.padStart(2,'0')}` === slot.start;
+                    });
 
+                    return (
+                      <td key={day.fullDate} className={`border-r border-gray-100 p-1 align-top h-16 ${day.isToday ? 'bg-blue-50/20' : ''}`}>
+                        <div className="flex flex-col gap-1 h-full">
+                          {citasEnSlot.map(cita => (
+                            <div 
+                              key={cita.id} 
+                              onClick={() => setSelectedCita(cita)}
+                              className="cursor-pointer bg-blue-100 hover:bg-blue-200 text-blue-800 text-xs p-1.5 rounded border-l-2 border-blue-500 shadow-sm transition-all hover:shadow-md"
+                              title={`${cita.paciente} - ${cita.motivo}`}
+                            >
+                              <div className="font-bold truncate">{cita.paciente}</div>
+                              <div className="flex items-center gap-1 text-[10px] opacity-80 truncate">
+                                <FaUserMd size={8} /> {cita.profesional.split(' ')[0]} ...
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      {/* Modal Detalle (Simple View) */}
       <ModalBase 
         open={!!selectedCita} 
-        title="Detalle de la Cita" 
+        title="Detalle de Cita" 
         onClose={() => setSelectedCita(null)}
       >
         {selectedCita && (
-          <div className="detalle-cita-semanal">
-            <div className="detalle-row">
-              <label>Paciente:</label>
-              <span>{selectedCita.paciente}</span>
+          <div className="space-y-4 p-2">
+            <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg text-blue-900">
+               <FaClock className="text-xl" />
+               <div>
+                 <div className="font-bold">{selectedCita.fecha}</div>
+                 <div className="text-sm">{selectedCita.hora} - {selectedCita.hora_fin}</div>
+               </div>
             </div>
-            <div className="detalle-row">
-              <label>Documento:</label>
-              <span>{selectedCita.documento}</span>
-            </div>
-            <div className="detalle-row">
-              <label>Especialidad:</label>
-              <span>{selectedCita.motivo}</span>
-            </div>
-            <div className="detalle-row">
-              <label>Fecha:</label>
-              <span>{selectedCita.fecha}</span>
-            </div>
-            <div className="detalle-row">
-              <label>Hora:</label>
-              <span>
-                {selectedCita.hora?.substring(0, 5)} - {selectedCita.hora_fin?.substring(0, 5) || ''}
-              </span>
-            </div>
-            <div className="detalle-row">
-              <label>Profesional:</label>
-              <span>{selectedCita.profesional}</span>
-            </div>
-            {selectedCita.observacion && (
-              <div className="detalle-row">
-                <label>Observación:</label>
-                <p>{selectedCita.observacion}</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase">Paciente</label>
+                <div className="text-gray-900 font-medium">{selectedCita.paciente}</div>
+                <div className="text-xs text-gray-500">{selectedCita.documento}</div>
               </div>
-            )}
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase">Profesional</label>
+                <div className="text-gray-900 font-medium">{selectedCita.profesional}</div>
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-xs font-bold text-gray-500 uppercase">Motivo</label>
+                <div><Badge variant="info">{selectedCita.motivo}</Badge></div>
+              </div>
+              {selectedCita.observacion && (
+                <div className="md:col-span-2">
+                  <label className="text-xs font-bold text-gray-500 uppercase">Observaciones</label>
+                  <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded">{selectedCita.observacion}</p>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex justify-end pt-4">
+              <Button onClick={() => setSelectedCita(null)} variant="secondary">Cerrar</Button>
+            </div>
           </div>
         )}
       </ModalBase>
     </div>
   );
 }
-

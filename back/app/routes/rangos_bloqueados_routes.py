@@ -18,6 +18,10 @@ class RangoBloqueadoRequest(BaseModel):
     hora_fin: str
     descripcion: Optional[str] = ""
 
+@router.get("/rango")
+def get_rangos_rango(profesional_id: int = Query(...), inicio: str = Query(...), fin: str = Query(...)):
+    return rangos_bloqueados_control.obtener_rangos_bloqueados_rango(profesional_id, inicio, fin)
+
 @router.get("/")
 def get_rangos(profesional_id: Optional[int] = None, fecha: Optional[str] = None):
     return rangos_bloqueados_control.obtener_rangos_bloqueados(profesional_id, fecha)

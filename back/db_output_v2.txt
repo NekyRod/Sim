@@ -1,0 +1,6 @@
+Configuraci¾n cargada: {'host': 'localhost', 'dbname': 'sim', 'user': 'admiSim', 'password': '4dm1n*2026', 'port': 5432}
+CON_OK
+TABLE: odontograma_historial - COLS: ['id', 'paciente_id', 'profesional_id', 'fecha_registro', 'observaciones', 'estado', 'created_at', 'updated_at', 'registrado_por']
+TABLE: detalle_diente - COLS: ['id', 'odontograma_id', 'procedimiento_id', 'pieza_dental', 'cara', 'estado_completado', 'created_at', 'hallazgo', 'plan_tratamiento', 'cie10_codigo', 'cie10_texto', 'evolucion_porcentaje']
+TABLE: profesionales - COLS: ['id', 'nombre_completo', 'nombre', 'apellidos', 'prenombre_id', 'tipo_identificacion', 'numero_identificacion', 'nit', 'correo', 'celular', 'telefono', 'ciudad', 'departamento', 'direccion', 'especialidad', 'especialidad_id', 'estado_cuenta', 'activo', 'updated_at']
+TABLE: procedimientos_personalizados - COLS: ['id', 'nombre', 'tipo', 'aplica_a_cara', 'aplica_diente_completo', 'color_hex', 'es_extraccion', 'es_borrador', 'activo', 'created_at', 'updated_at']

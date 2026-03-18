@@ -1,0 +1,135 @@
+# =============================================================================
+# GOI SIM-ODONT — Docker Compose (Desarrollo)
+# =============================================================================
+# Uso:
+#   1. Copiar .env.example a .env y completar los valores
+#   2. Levantar:  docker compose up -d
+#   3. Logs:      docker compose logs -f
+#   4. Parar:     docker compose down
+#   5. Reset DB:  docker compose down -v  (borra volumen de datos)
+# =============================================================================
+
+services:
+  # ── PostgreSQL Database ──────────────────────────────
+  db:
+    image: postgres:15-alpine
+    container_name: wolfmedic-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-sim}
+      POSTGRES_USER: ${POSTGRES_USER:-admiSim}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?⚠  Define POSTGRES_PASSWORD en .env}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/db/01_init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-admiSim} -d ${POSTGRES_DB:-sim}",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    networks:
+      - wolfmedic-net
+
+  # ── Auth Service (Puerto 8000) ───────────────────────
+  auth:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile.dev
+    container_name: wolfmedic-auth
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: ${POSTGRES_DB:-sim}
+      POSTGRES_USER: ${POSTGRES_USER:-admiSim}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PORT: 5432
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_FERNET_KEY: ${JWT_FERNET_KEY}
+      ALGORITHM: ${ALGORITHM:-HS256}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      AUTH_SERVICE_URL: http://auth:8000
+      TOKEN_URL: http://auth:8000/auth/token
+    volumes:
+      # Hot-reload: monta el código fuente, los cambios se reflejan al instante
+      - ./auth-service/app:/app/app
+    ports:
+      - "8000:8000"
+    networks:
+      - wolfmedic-net
+
+  # ── Backend API (Puerto 8002 → interno 8001) ────────
+  backend:
+    build:
+      context: ./back
+      dockerfile: Dockerfile.dev
+    container_name: wolfmedic-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: ${POSTGRES_DB:-sim}
+      POSTGRES_USER: ${POSTGRES_USER:-admiSim}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PORT: 5432
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_FERNET_KEY: ${JWT_FERNET_KEY}
+      ALGORITHM: ${ALGORITHM:-HS256}
+      AUTH_SERVICE_URL: http://auth:8000
+      TOKEN_URL: http://auth:8000/auth/token
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+    volumes:
+      # Hot-reload: monta el código fuente, los cambios se reflejan al instante
+      - ./back/app:/app/app
+    ports:
+      - "8002:8001"
+    networks:
+      - wolfmedic-net
+
+  # ── Frontend React+Vite (Puerto 80 → interno 5173) ──
+  frontend:
+    build:
+      context: ./front/sim-agenda-web
+      dockerfile: Dockerfile.dev
+    container_name: wolfmedic-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - auth
+    environment:
+      # Vite usa estas en desarrollo (acceso desde el navegador del HOST)
+      VITE_BACKEND_URL: http://localhost:8002
+      VITE_AUTH_SERVICE_URL: http://localhost:8000
+      VITE_TOKEN_URL: http://localhost:8000/auth/token
+    volumes:
+      # Hot-reload: monta src/ y archivos de config para HMR instantáneo
+      - ./front/sim-agenda-web/src:/app/src
+      - ./front/sim-agenda-web/public:/app/public
+      - ./front/sim-agenda-web/index.html:/app/index.html
+      - ./front/sim-agenda-web/vite.config.js:/app/vite.config.js
+    ports:
+      - "80:5173"
+    networks:
+      - wolfmedic-net
+
+# ── Red interna ───────────────────────────────────────
+networks:
+  wolfmedic-net:
+    driver: bridge
+    name: wolfmedic-net
+
+# ── Volumen persistente para PostgreSQL ───────────────
+volumes:
+  pgdata:
+    driver: local

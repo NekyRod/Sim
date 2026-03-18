@@ -4,7 +4,7 @@ from fastapi import APIRouter, status, Depends
 from pydantic import BaseModel
 from datetime import date, time
 from typing import Optional
-from app.control.citas_control import crear_cita_control, obtener_citas_rango, eliminar_cita_control, obtener_cita_id
+from app.control.citas_control import crear_cita_control, obtener_citas_rango, eliminar_cita_control, obtener_cita_id, obtener_citas_paciente_admin
 from app.config.security import get_current_user_token
 
 router = APIRouter(
@@ -51,6 +51,13 @@ def get_citas_rango(profesional_id: int, inicio: date, fin: date):
     """
     return obtener_citas_rango(profesional_id, inicio, fin)
 
+@router.get("/paciente/{paciente_id}")
+def obtener_historial_paciente(paciente_id: int):
+    """
+    Obtener todo el historial de citas de un paciente.
+    """
+    return obtener_citas_paciente_admin(paciente_id)
+
 @router.get("/{cita_id}")
 def get_cita(cita_id: int):
     return obtener_cita_id(cita_id)
@@ -58,3 +65,11 @@ def get_cita(cita_id: int):
 @router.delete("/{cita_id}")
 def eliminar_cita(cita_id: int):
     return eliminar_cita_control(cita_id)
+
+class ObservacionRequest(BaseModel):
+    observacion: str
+
+@router.put("/{cita_id}/observacion")
+def update_observacion(cita_id: int, body: ObservacionRequest):
+    from app.control.citas_control import actualizar_observacion_control
+    return actualizar_observacion_control(cita_id, body.observacion)

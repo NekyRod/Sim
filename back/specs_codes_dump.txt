@@ -1,0 +1,10 @@
+--- Especialidades en BD ---
+ID: 4 | Cod: 'MED' | Nom: 'Medicina General' | Activo: False
+ID: 5 | Cod: 'ODO' | Nom: 'Odontología' | Activo: True
+ID: 6 | Cod: 'PED' | Nom: 'Pediatría' | Activo: False
+ID: 7 | Cod: 'RES' | Nom: 'Resina' | Activo: True
+ID: 8 | Cod: 'TEST_DEL' | Nom: 'Test Delete' | Activo: False
+
+--- Conteo Profesionales por Codigo (Primary) ---
+Cod: 'RES' -> 1 profesionales
+Cod: 'ODO' -> 1 profesionales

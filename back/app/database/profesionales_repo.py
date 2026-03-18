@@ -136,6 +136,47 @@ def obtener_profesional(profesional_id: int):
     finally:
         conn.close()
 
+def obtener_profesional_por_identificacion(identificacion: str):
+    conn = get_db_connection()
+    try:
+        with conn, conn.cursor() as cur:
+            cur.execute("""
+                SELECT 
+                    p.id, p.nombre, p.apellidos, p.prenombre_id,
+                    p.tipo_identificacion, p.numero_identificacion, p.nit,
+                    p.correo, p.celular, p.telefono,
+                    p.ciudad, p.departamento, p.direccion,
+                    p.especialidad_id, p.estado_cuenta, p.activo,
+                    CONCAT(p.nombre, ' ', p.apellidos) as nombre_completo
+                FROM profesionales p
+                WHERE p.numero_identificacion = %s OR p.correo = %s
+            """, (identificacion, identificacion))
+            
+            r = cur.fetchone()
+            if r:
+                 return {
+                    "id": r[0],
+                    "nombre": r[1],
+                    "apellidos": r[2],
+                    "prenombre_id": r[3],
+                    "tipo_identificacion": r[4],
+                    "numero_identificacion": r[5],
+                    "nit": r[6],
+                    "correo": r[7],
+                    "celular": r[8],
+                    "telefono": r[9],
+                    "ciudad": r[10],
+                    "departamento": r[11],
+                    "direccion": r[12],
+                    "especialidad_id": r[13],
+                    "estado_cuenta": r[14],
+                    "activo": r[15],
+                    "nombre_completo": r[16]
+                 }
+            return None
+    finally:
+        conn.close()
+
 def crear_profesional(data: dict):
     conn = get_db_connection()
     try:
@@ -144,9 +185,9 @@ def crear_profesional(data: dict):
                 INSERT INTO profesionales (
                     nombre, apellidos, prenombre_id, tipo_identificacion, numero_identificacion,
                     nit, correo, celular, telefono,
-                    ciudad, departamento, direccion, especialidad_id, estado_cuenta, activo
+                    ciudad, departamento, direccion, especialidad_id, estado_cuenta, activo, nombre_completo
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
             """, (
                 data['nombre'], data['apellidos'], data.get('prenombre_id'),
@@ -155,7 +196,7 @@ def crear_profesional(data: dict):
                 data.get('telefono'),
                 data.get('ciudad'), data.get('departamento'), data.get('direccion'),
                 data.get('especialidad_id'), data.get('estado_cuenta', 'Habilitada'),
-                data.get('activo', True)
+                data.get('activo', True), data.get('nombre_completo', '')
             ))
             nuevo_id = cur.fetchone()[0]
             conn.commit()
@@ -174,7 +215,7 @@ def actualizar_profesional(profesional_id: int, data: dict):
                     nit = %s, correo = %s, celular = %s, telefono = %s,
                     ciudad = %s, departamento = %s,
                     direccion = %s, especialidad_id = %s, estado_cuenta = %s,
-                    activo = %s, updated_at = CURRENT_TIMESTAMP
+                    activo = %s, nombre_completo = %s, updated_at = CURRENT_TIMESTAMP
                 WHERE id = %s
             """, (
                 data['nombre'], data['apellidos'], data.get('prenombre_id'),
@@ -183,7 +224,7 @@ def actualizar_profesional(profesional_id: int, data: dict):
                 data.get('telefono'),
                 data.get('ciudad'), data.get('departamento'), data.get('direccion'),
                 data.get('especialidad_id'), data.get('estado_cuenta', 'Habilitada'),
-                data.get('activo', True), profesional_id
+                data.get('activo', True), data.get('nombre_completo', ''), profesional_id
             ))
             conn.commit()
             return cur.rowcount > 0

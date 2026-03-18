@@ -1,0 +1,15 @@
+Table 'odontograma_historial' exists: False
+--------------------
+Table 'detalle_diente' exists: False
+--------------------
+Table 'anamnesis' exists: True
+Columns for 'anamnesis':
+  - id (integer)
+  - paciente_id (integer)
+  - antece_medicos (jsonb)
+  - observaciones (text)
+  - created_at (timestamp with time zone)
+  - updated_at (timestamp with time zone)
+--------------------
+Table 'procedimientos_personalizados' exists: False
+--------------------

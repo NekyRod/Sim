@@ -1,0 +1,6 @@
+sim-agenda-web/node_modules
+sim-agenda-web/dist
+node_modules
+dist
+.git
+.env

@@ -23,3 +23,8 @@ def borrar_rango_bloqueado(id: int):
     if not exito:
         raise HTTPException(status_code=404, detail="Rango bloqueado no encontrado")
     return {"message": "Rango bloqueado eliminado correctamente"}
+
+def obtener_rangos_bloqueados_rango(profesional_id: int, fecha_inicio: str, fecha_fin: str):
+    if profesional_id is None or not fecha_inicio or not fecha_fin:
+        raise HTTPException(status_code=400, detail="Faltan parámetros de búsqueda")
+    return {"data": rangos_bloqueados_repo.listar_rangos_bloqueados_rango(profesional_id, fecha_inicio, fecha_fin)}

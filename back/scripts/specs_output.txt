@@ -1,0 +1,3 @@
+{"id": 4, "codigo": "MED", "nombre": "Medicina General", "activo": true}
+{"id": 5, "codigo": "ODO", "nombre": "Odontolog\u00eda", "activo": true}
+{"id": 6, "codigo": "PED", "nombre": "Pediatr\u00eda", "activo": true}

@@ -27,3 +27,9 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+# Large files / deploy images
+*.tar
+*.tar.gz
+deploy/IMAGES/
+temp_deploy/

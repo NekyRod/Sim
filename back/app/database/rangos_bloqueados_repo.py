@@ -51,3 +51,50 @@ def eliminar_rango_bloqueado(id: int):
             return cur.rowcount > 0
     finally:
         conn.close()
+
+def listar_rangos_bloqueados_rango(profesional_id: int, fecha_inicio: str, fecha_fin: str):
+    conn = get_db_connection()
+    try:
+        with conn, conn.cursor() as cur:
+            query = """
+                SELECT id, profesional_id, fecha, hora_inicio, hora_fin, descripcion 
+                FROM rangos_bloqueados 
+                WHERE fecha >= %s AND fecha <= %s
+            """
+            params = [fecha_inicio, fecha_fin]
+            
+            if profesional_id and profesional_id > 0:
+                query += " AND profesional_id = %s"
+                params.append(profesional_id)
+                
+            cur.execute(query, tuple(params))
+            rows = cur.fetchall()
+            return [{
+                "id": r[0],
+                "profesional_id": r[1],
+                "fecha": str(r[2]),
+                "hora_inicio": str(r[3]),
+                "hora_fin": str(r[4]),
+                "descripcion": r[5]
+            } for r in rows]
+    finally:
+        conn.close()
+
+def existe_superposicion_bloqueo(profesional_id: int, fecha: str, hora_inicio: str, hora_fin: str):
+    conn = get_db_connection()
+    try:
+        with conn, conn.cursor() as cur:
+            query = """
+                SELECT id FROM rangos_bloqueados 
+                WHERE profesional_id = %s 
+                AND fecha = %s 
+                AND (hora_inicio < %s AND hora_fin > %s)
+            """
+            # Two time intervals [A_start, A_end] and [B_start, B_end] overlap if:
+            # A_start < B_end AND A_end > B_start
+            # Here: hora_inicio (A_start) < B_end AND hora_fin (A_end) > B_start
+            cur.execute(query, (profesional_id, fecha, hora_fin, hora_inicio))
+            row = cur.fetchone()
+            return row is not None
+    finally:
+        conn.close()

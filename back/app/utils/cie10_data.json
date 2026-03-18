@@ -1,0 +1,12 @@
+[
+  {"codigo": "K020", "nombre": "Caries limitada al esmalte"},
+  {"codigo": "K021", "nombre": "Caries de la dentina"},
+  {"codigo": "K022", "nombre": "Caries del cemento"},
+  {"codigo": "K030", "nombre": "Atrición excesiva de los dientes"},
+  {"codigo": "K040", "nombre": "Pulpitis"},
+  {"codigo": "K050", "nombre": "Gingivitis aguda"},
+  {"codigo": "K051", "nombre": "Gingivitis crónica"},
+  {"codigo": "K052", "nombre": "Periodontitis aguda"},
+  {"codigo": "K053", "nombre": "Periodontitis crónica"},
+  {"codigo": "K081", "nombre": "Pérdida de dientes debida a accidente, extracción o enfermedad periodontal local"}
+]

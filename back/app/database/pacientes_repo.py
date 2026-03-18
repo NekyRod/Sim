@@ -107,6 +107,28 @@ def obtener_paciente_por_doc(tipo_id: str, numero_id: str):
         conn.close()
 
 
+def get_patient_by_document_number(numero_id: str):
+    """
+    Obtener paciente por número de documento (sin importar tipo).
+    Retorna el primero encontrado activo.
+    """
+    conn = get_db_connection()
+    try:
+        with conn, conn.cursor() as cur:
+            cur.execute("""
+                SELECT id, tipo_identificacion, numero_identificacion, nombre_completo
+                FROM pacientes
+                WHERE numero_identificacion = %s AND activo = TRUE
+                LIMIT 1
+            """, (numero_id,))
+            row = cur.fetchone()
+            if row:
+                return {"id": row[0], "nombre_completo": row[3]}
+            return None
+    finally:
+        conn.close()
+
+
 def create_paciente(data: dict) -> int:
     """Crear nuevo paciente"""
     conn = get_db_connection()
