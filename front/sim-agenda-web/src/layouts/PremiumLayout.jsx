@@ -4,7 +4,8 @@ import {
   FaClipboardList, FaCalendarCheck, FaCalendarDay, FaCalendarWeek,
   FaClock, FaChartBar, FaPowerOff, FaCog,
   FaUser, FaUserMd, FaTags, FaFileMedical, FaCalendarTimes,
-  FaIdCard, FaMapMarkerAlt, FaBars, FaTimes, FaChevronDown, FaSearch, FaServer, FaShieldAlt, FaUserShield, FaBook
+  FaIdCard, FaMapMarkerAlt, FaBars, FaTimes, FaChevronDown, FaSearch, FaServer, FaShieldAlt, FaUserShield, FaBook,
+  FaMoneyBillWave, FaFileInvoiceDollar
 } from 'react-icons/fa';
 import logoGOI from '../img/logo_goi.jpg';
 import { useAuth } from '../context/AuthContext';
@@ -182,11 +183,13 @@ export default function PremiumLayout({ children, searchBar, onLogout }) {
     hasPermission('IDENTIFICACION', 'view') && { to: '/tipos-identificacion', icon: FaIdCard, label: 'Tipos de Identificación' },
     hasPermission('CIUDADES', 'view') && { to: '/ciudades-residencia', icon: FaMapMarkerAlt, label: 'Ciudades de Residencia' },
     hasPermission('SISTEMA', 'view') && { to: '/admin/procedimientos', icon: FaTags, label: 'Procedimientos' },
+    hasPermission('SISTEMA', 'view') && { to: '/tarifas-cups', icon: FaMoneyBillWave, label: 'Tarifario CUPS' },
   ].filter(Boolean);
   
   // Admin section
   const adminMenuItems = [
     hasPermission('SISTEMA', 'view') && { to: '/admin/smtp', icon: FaServer, label: 'SMTP Config' },
+    hasPermission('SISTEMA', 'view') && { to: '/admin/config-dian', icon: FaFileInvoiceDollar, label: 'Config DIAN / RIPS' },
     role === 'Administrador' && { to: '/admin/roles', icon: FaShieldAlt, label: 'Gestión de Roles' },
     hasPermission('USUARIOS', 'view') && { to: '/admin/users', icon: FaUserShield, label: 'Gestión de Usuarios' },
   ].filter(Boolean);

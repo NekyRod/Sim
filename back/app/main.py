@@ -33,6 +33,7 @@ from app.routes import (
     recetas_routes,
     documentos_routes,
     consultas_routes,
+    tarifas_routes,
 )
 from app.routes import patient_api_routes
 
@@ -159,6 +160,7 @@ app.include_router(evoluciones_routes.router)
 app.include_router(recetas_routes.router)
 app.include_router(documentos_routes.router)
 app.include_router(consultas_routes.router)
+app.include_router(tarifas_routes.router)
 
 if settings_routes:
     logger.info("Settings routes cargadas correctamente")

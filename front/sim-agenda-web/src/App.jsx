@@ -37,6 +37,8 @@ import RegisterPage from './pages/RegisterPage.jsx';
 import OdontogramPage from './pages/OdontogramPage.jsx';
 import PatientLayout from './layouts/PatientLayout.jsx';
 import PatientDetailView from './pages/admin/PatientDetailView.jsx';
+import TarifasCUPS from './pages/config/TarifasCUPS.jsx';
+import ConfigDIAN from './pages/admin/ConfigDIAN.jsx';
 
 import { apiFetch } from './api/client';
 import PremiumLayout from './layouts/PremiumLayout.jsx';
@@ -311,6 +313,18 @@ function AppContent() {
             {/* Ficha Completa del Paciente (Nueva Fase 6) */}
             <Route path="/admin/pacientes/:id" element={
                 <PatientDetailView />
+            } />
+
+            {/* Facturación */}
+            <Route path="/tarifas-cups" element={
+              <HasPermission group="SISTEMA" action="view" fallback={<Navigate to="/dashboard" />}>
+                <TarifasCUPS />
+              </HasPermission>
+            } />
+            <Route path="/admin/config-dian" element={
+              <HasPermission group="SISTEMA" action="view" fallback={<Navigate to="/dashboard" />}>
+                <ConfigDIAN />
+              </HasPermission>
             } />
 
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
