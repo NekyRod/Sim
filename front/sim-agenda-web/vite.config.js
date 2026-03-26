@@ -18,9 +18,6 @@ export default defineConfig({
     strictPort: true, // Falla si el puerto está ocupado en vez de saltar al 5174...
     watch: {
       usePolling: true,
-    },
-    hmr: {
-      clientPort: 80, // Dile al navegador que busque el WebSocket en el puerto expuesto del Host (80)
     }
   },
 })

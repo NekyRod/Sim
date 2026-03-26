@@ -1,4 +1,4 @@
-# WolfArena / WolfTracer - Reglas de Arquitectura (OBLIGATORIAS)
+# Wolfmedic - Reglas de Arquitectura (OBLIGATORIAS)
 
 Este repositorio se desarrolla con:
 - Front: React (Vite) + Tailwind
