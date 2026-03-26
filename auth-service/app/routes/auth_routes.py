@@ -56,7 +56,7 @@ def login(body: LoginRequest):
         "role_id": user["role_id"],
         "role_name": user["role_name"],
         "permissions": permissions,  # Lista de scopes: ["AGENDAMIENTO:view", "PACIENTES:edit"]
-        "exp": datetime.utcnow() + timedelta(hours=8)
+        "exp": datetime.utcnow() + timedelta(minutes=15)
     }
     
     token = jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)

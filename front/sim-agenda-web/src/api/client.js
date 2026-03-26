@@ -15,6 +15,9 @@ export async function apiFetch(url, options = {}) {
   const data = await resp.json().catch(() => ({}));
 
   if (!resp.ok) {
+    if (resp.status === 401) {
+      window.dispatchEvent(new Event('auth_unauthorized'));
+    }
     const msg = data.detail || `Error ${resp.status}`;
     throw new Error(msg);
   }
