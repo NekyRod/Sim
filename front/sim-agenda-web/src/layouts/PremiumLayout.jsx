@@ -184,6 +184,7 @@ export default function PremiumLayout({ children, searchBar, onLogout }) {
     hasPermission('CIUDADES', 'view') && { to: '/ciudades-residencia', icon: FaMapMarkerAlt, label: 'Ciudades de Residencia' },
     hasPermission('SISTEMA', 'view') && { to: '/admin/procedimientos', icon: FaTags, label: 'Procedimientos' },
     hasPermission('SISTEMA', 'view') && { to: '/tarifas-cups', icon: FaMoneyBillWave, label: 'Tarifario CUPS' },
+    hasPermission('SISTEMA', 'view') && { to: '/facturacion', icon: FaFileInvoiceDollar, label: 'Facturas' },
   ].filter(Boolean);
   
   // Admin section

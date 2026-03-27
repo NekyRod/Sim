@@ -4,7 +4,7 @@ import {
   FaUser, FaHistory, FaTimes, FaTooth,
   FaCapsules, FaChartLine, FaFileMedicalAlt, FaXRay, 
   FaSyringe, FaFileMedical, FaFileSignature, FaArrowLeft,
-  FaCheckCircle
+  FaCheckCircle, FaFileInvoiceDollar, FaPlus
 } from 'react-icons/fa';
 import PatientForm from '../../components/admin/PatientForm';
 import GenerarAlertaModal from '../../components/admin/GenerarAlertaModal';
@@ -14,6 +14,7 @@ import { Input } from '../../components/ui';
 import { showToast, showConfirm } from '../../utils/ui';
 import { useAuth } from '../../context/AuthContext';
 import { OdontogramBoard } from '../../components/odontograma/OdontogramBoard';
+import ModalFacturar from '../../components/facturacion/ModalFacturar';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -78,6 +79,10 @@ export default function PatientDetailView() {
   const [loadingRecetas, setLoadingRecetas] = useState(false);
   const [documentos, setDocumentos] = useState([]);
   const [loadingDocumentos, setLoadingDocumentos] = useState(false);
+  // Facturación
+  const [facturasPaciente, setFacturasPaciente] = useState([]);
+  const [loadingFacturas, setLoadingFacturas] = useState(false);
+  const [showModalFacturar, setShowModalFacturar] = useState(false);
 
   // Cargar info base del paciente
   useEffect(() => {
@@ -118,6 +123,9 @@ export default function PatientDetailView() {
     }
     if (activeTab === 'recetas' && paciente?.id) {
       fetchRecetas(paciente.id);
+    }
+    if (activeTab === 'facturacion' && paciente?.id) {
+      fetchFacturasPaciente(paciente.id);
     }
   }, [activeTab, paciente]);
 
@@ -227,6 +235,15 @@ export default function PatientDetailView() {
       setRecetas(resp || []);
     } catch (err) { console.error(err); }
     finally { setLoadingRecetas(false); }
+  }
+
+  async function fetchFacturasPaciente(id) {
+    setLoadingFacturas(true);
+    try {
+      const resp = await apiFetch(`${BACKEND_URL}/facturas/?paciente_id=${id}`);
+      setFacturasPaciente(resp.data || []);
+    } catch (err) { console.error(err); }
+    finally { setLoadingFacturas(false); }
   }
 
   async function fetchAnamnesis(id) {
@@ -404,6 +421,14 @@ export default function PatientDetailView() {
 
   return (
     <>
+    {showModalFacturar && (
+      <ModalFacturar
+        paciente={paciente}
+        profesionalId={profActual?.id}
+        onClose={() => setShowModalFacturar(false)}
+        onFacturaCreada={() => fetchFacturasPaciente(paciente.id)}
+      />
+    )}
     <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-gray-50">
           {/* Static Header: Datos Personales */}
           <div className="bg-white border-b border-gray-200 p-6 flex-shrink-0 shadow-sm z-10">
@@ -494,6 +519,7 @@ export default function PatientDetailView() {
              <TabButton active={activeTab === 'recetas'} onClick={() => setActiveTab('recetas')} icon={<FaSyringe />} label="Recetas" />
              <TabButton active={activeTab === 'docs_clinicos'} onClick={() => setActiveTab('docs_clinicos')} icon={<FaFileMedical />} label="Documentos clínicos" />
              <TabButton active={activeTab === 'consentimientos'} onClick={() => setActiveTab('consentimientos')} icon={<FaFileSignature />} label="Consentimientos" />
+             <TabButton active={activeTab === 'facturacion'} onClick={() => setActiveTab('facturacion')} icon={<FaFileInvoiceDollar />} label="Facturación" />
           </div>
 
           {/* Content */}
@@ -714,6 +740,67 @@ export default function PatientDetailView() {
 
                       return null;
 })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'facturacion' && (
+              <div className="space-y-4 animate-fadeIn">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-green-100 rounded-xl">
+                      <FaFileInvoiceDollar className="text-green-600 text-lg" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-800">Facturación del Paciente</h3>
+                      <p className="text-xs text-gray-500">{paciente.nombre_completo}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowModalFacturar(true)}
+                    className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-green-700 transition-colors shadow-sm"
+                  >
+                    <FaPlus /> Nueva Factura
+                  </button>
+                </div>
+
+                {loadingFacturas ? (
+                  <div className="text-center py-8 text-gray-400">Cargando facturas...</div>
+                ) : facturasPaciente.length === 0 ? (
+                  <div className="text-center py-12 bg-white rounded-xl border border-gray-100 text-gray-400">
+                    <FaFileInvoiceDollar className="text-4xl mx-auto mb-3 opacity-20" />
+                    <p>No hay facturas registradas para este paciente.</p>
+                    <button
+                      onClick={() => setShowModalFacturar(true)}
+                      className="mt-4 bg-green-600 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-green-700 transition-colors"
+                    >
+                      <FaPlus className="inline mr-1" /> Emitir primera factura
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {facturasPaciente.map(f => {
+                      const estadoColors = { pendiente: 'bg-yellow-100 text-yellow-700', validada: 'bg-green-100 text-green-700', anulada: 'bg-red-100 text-red-600', enviada: 'bg-blue-100 text-blue-700' };
+                      const formatCOP = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v || 0);
+                      return (
+                        <div key={f.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="p-2 bg-indigo-50 rounded-lg">
+                              <FaFileInvoiceDollar className="text-indigo-500" />
+                            </div>
+                            <div>
+                              <div className="font-bold text-indigo-600 font-mono">{f.numero_factura}</div>
+                              <div className="text-xs text-gray-400">{new Date(f.fecha_emision).toLocaleDateString('es-CO')} · {f.regimen}</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <span className="font-bold text-green-700">{formatCOP(f.total)}</span>
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded capitalize ${estadoColors[f.estado] || 'bg-gray-100 text-gray-600'}`}>{f.estado}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

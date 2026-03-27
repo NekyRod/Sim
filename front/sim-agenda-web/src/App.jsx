@@ -39,6 +39,7 @@ import PatientLayout from './layouts/PatientLayout.jsx';
 import PatientDetailView from './pages/admin/PatientDetailView.jsx';
 import TarifasCUPS from './pages/config/TarifasCUPS.jsx';
 import ConfigDIAN from './pages/admin/ConfigDIAN.jsx';
+import Facturas from './pages/facturacion/Facturas.jsx';
 
 import { apiFetch } from './api/client';
 import PremiumLayout from './layouts/PremiumLayout.jsx';
@@ -324,6 +325,11 @@ function AppContent() {
             <Route path="/admin/config-dian" element={
               <HasPermission group="SISTEMA" action="view" fallback={<Navigate to="/dashboard" />}>
                 <ConfigDIAN />
+              </HasPermission>
+            } />
+            <Route path="/facturacion" element={
+              <HasPermission group="SISTEMA" action="view" fallback={<Navigate to="/dashboard" />}>
+                <Facturas />
               </HasPermission>
             } />
 
